@@ -987,37 +987,31 @@ trackbox:hover .track-title .track_descspan
 <script type="text/javascript" src="http://connect.soundcloud.com/sdk.js"></script>
 </head>
 <body>
-    <section id="soundcloud"></section>
-    <output></output>
-    <section id="player">
-      <header id="player-header">
-        <div class="waveform-holder">
-          <div id="animbox"></div>
-          <div id="canvas-overlay"></div>
-        </div>
-        <div id="controls">
-          <div class="search-button" title="Marre de GarD?">🔍</div>
-          <div class="player-button" href="#a:0:b:0" data-action="backward" data-index="0"><span class="player-click">&lt;&lt;</span></div>
-          <div class="player-button" href="#" data-action="play"><span class="player-click">play</span></div>
-          <div class="player-button" href="#" data-action="pause"><span class="player-click">pause</span></div>
-          <div class="player-button" href="#a:0:b:1" data-action="forward" data-index="0"><span class="player-click">&gt;&gt;</span></div>
-          <div class="volume-control">
-            <label>-</label>
-            <input type="range" data-action="setvolume" min="0" max="1" step="0.1" />
-            <label>+</label>
-          </div>
-          <div id="player-state"></div>
-        </div>
-        <div id="user-description"></div>
-        <div id="track-description"></div>
-        <ol id="comments"></ol>
-      </header>
-      <div id="playlist" data-display-mode="thumb"></div>
-    </section>
-
-    
-<canvas></canvas>
-<output id="output"></output>
+<section id="player">
+  <header id="player-header">
+    <div class="waveform-holder">
+      <div id="animbox"></div>
+      <div id="canvas-overlay"></div>
+    </div>
+    <div id="controls">
+      <div class="search-button" title="Marre de GarD?">🔍</div>
+      <div class="player-button" href="#a:0:b:0" data-action="backward" data-index="0"><span class="player-click">&lt;&lt;</span></div>
+      <div class="player-button" href="#" data-action="play"><span class="player-click">play</span></div>
+      <div class="player-button" href="#" data-action="pause"><span class="player-click">pause</span></div>
+      <div class="player-button" href="#a:0:b:1" data-action="forward" data-index="0"><span class="player-click">&gt;&gt;</span></div>
+      <div class="volume-control">
+        <label>-</label>
+        <input type="range" data-action="setvolume" min="0" max="1" step="0.1" />
+        <label>+</label>
+      </div>
+      <div id="player-state"></div>
+    </div>
+    <div id="user-description"></div>
+    <div id="track-description"></div>
+    <ol id="comments"></ol>
+  </header>
+  <div id="playlist" data-display-mode="thumb"></div>
+</section>
     
 <script type="text/html" id="album-item">
   <div class="album">
@@ -1100,225 +1094,14 @@ trackbox:hover .track-title .track_descspan
     
 <script type="text/javascript">
 
-    var albums = new Array()
-      , toggleplay
-      , autoplay = true // auto start songs, and jump to next song
-      , indexOfCurrentAlbum
-      , indexOfCurrentSound
-      , currentPlayer
-      , currentTrack
-      , graphUpdater
-      , waveformData
-      , canvas
-      , context
-      , waveformWidth
-      , scClientID = "0ec3a92db08c758a47397bf8d588a250"
-//      , height
-      , scUserID = 61698493 // mais c pas le vrai GarD
-      , CORSRelay = false; // CORS relay tool URL
 
-    // for the lazy
-    String.prototype.replaceArray = function(find, replace) {
-      var replaceString = this;
-      var regex; 
-      for (var i = 0; i < find.length; i++) {
-        regex = new RegExp(find[i], "g");
-        replaceString = replaceString.replace(regex, replace[i]);
-      }
-      return replaceString;
-    };
-
-    function htmlEncode(string){
-      string = (string === null)?"":string.toString();
-      string = $('<div/>').text(string).html();
-      return string.replace(/\n/gi, '<br />\n');
-      //
-    }
-
-
-    function attrEncode(string) {
-      string = (string === null)?"":string.toString();
-      string = string.replace(/"/gi, '&quot;');
-      return string.replace(/\n/gi, '<br />\n');
-    }
-    
-    
-    function interfaceLock() {
-      $('body').addClass('locked');
-    };
-    
-    function interfaceRelease() {
-      $('body').removeClass('locked');
-    };
-    
-    
-    function playerPause() {
-      var currentPlayer = getCurrentPlayer()
-      if(currentPlayer) {
-        currentPlayer.pause();
-      }
-      interfaceRelease()
-    }
-    
-    function playerPlay() {
-      var currentPlayer = getCurrentPlayer()
-      if(currentPlayer) {
-        currentPlayer.play();
-      }
-      interfaceRelease();
-    }
-    
-    function playerNext() {
-      var tracks = $('#playlist .track trackbox'),
-          currentTrack = $('#playlist').attr('data-song-id'),
-          nextTrackHash = false,
-          album_id,
-          track_id;
-          
-      if(!tracks.length) {
-        interfaceRelease();
-        return;      
-      }
-      
-      $(tracks).each(function(trackIndex) {
-      
-        var linkType = '';
-        var linkVal = '';
-        
-        if( $('#playlist').attr('data-tag-id')!=0 ) {
-          linkType = 'tag';
-          linkVal = $("#playlist").attr('data-tag-id')
-        } else {
-          linkType = 'album';
-          linkVal = $("#playlist").attr('data-album-id');
-        }
-      
-        if( $(this).attr('data-id') == currentTrack ) {
-          if( trackIndex+1 < tracks.length ) {
-            album_id = $('#playlist').attr('data-album-id');
-            track_id = $(tracks[trackIndex+1]).attr('data-id');
-            if(album_id===undefined) return;
-            if(track_id===undefined || track_id===null) return;
-            nextTrackHash = '#'+linkType+':' + linkVal
-                          + ':track:' + $(tracks[trackIndex+1]).attr('data-id');
-          }
-        }
-      });
-      if(nextTrackHash) {
-        location.href = nextTrackHash;
-        //onHashChanged();
-      } else {
-        interfaceRelease();
-      }
-    }
-    
-    function playerPrev() {
-      var tracks = $('#playlist .track trackbox'),
-          currentTrack = $('#playlist').attr('data-song-id'),
-          prevTrackHash = false,
-          album_id,
-          track_id;
-
-      if(!tracks.length) {
-        interfaceRelease();
-        return;      
-      }
-      
-      $(tracks).each(function(trackIndex) {
-      
-        var linkType = '';
-        var linkVal = '';
-        
-        if( $('#playlist').attr('data-tag-id')!=0 ) {
-          linkType = 'tag';
-          linkVal = $("#playlist").attr('data-tag-id')
-        } else {
-          linkType = 'album';
-          linkVal = $("#playlist").attr('data-album-id');
-        }
-      
-        if( $(this).attr('data-id') == currentTrack ) {
-          if( trackIndex-1 >= 0 ) {
-            album_id = $('#playlist').attr('data-album-id');
-            track_id = $(tracks[trackIndex-1]).attr('data-id');
-            if(album_id===undefined) return;
-            if(track_id===undefined || track_id===null) return;
-            prevTrackHash = '#'+linkType+':' + linkVal
-                          + ':track:' + $(tracks[trackIndex-1]).attr('data-id');
-          }
-        }
-      });
-      if(prevTrackHash) {
-        location.href = prevTrackHash;
-        //onHashChanged();
-      } else {
-        interfaceRelease();
-      }
-    }
-    
-    
-    function playerApplyVolume() {
-      $('input[data-action="setvolume"]').trigger('change');
-    }
-
-    
-    function playerSetVolume(newVolume) {
-      var currentPlayer = getCurrentPlayer();
-      if(currentPlayer===undefined) {
-        console.warn('attempt to change volume on undefined player', newVolume);
-      } else {
-        currentPlayer.setVolume( newVolume );
-      }
-    }    
-    
-    
-    function getCurrentPlayer() {
-      return window.currentPlayer;
-    }
-    
-    
-    function getCurrentWaveFormData() {
-      return window['waveformData'];
-    }
-    
-    
-    function setWaveformData(waveformData) {
-      window['waveformData'] = waveformData;
-    }
-    
-    
-    function songProgress() {
-      var currentPlayer = getCurrentPlayer();
-      if(currentPlayer===undefined) return;
-      var ratio = (currentPlayer.position / currentPlayer.duration);
-      var state = currentPlayer.playState;
-      var progress = (ratio*waveformWidth);
-      var chroma = document.getElementById('animbox').style.backgroundColor;
-      if(ratio===1) {
-        onStreamFinished();
-      } else {
-        $('#canvas-overlay').css({'box-shadow':  progress.toFixed(0) + 'px 0 1px '+ chroma +' inset'});
-      }
-      
-      state = currentPlayer.playState === 1 ? 'playing' : state;
-      state = currentPlayer.isBuffering === true ? 'loading' : state;
-      state = currentPlayer.paused === true ? 'paused' : state;
-      
-      $('#player-state,#controls').attr({
-        'class': state,
-        'data-state': state
-      });
-      
-    }
-    
-    
     var Route = {
       // default : load playlist from user profile
       default: function(args) {
         // not arguments given, show albums. TODO : play first song from first album ?
         $('#playlist').attr('data-song-id', 0).attr('data-album-id', 0).attr('data-tag-id', 0);
-        SC.get('/users/'+scUserID+'/playlists', onPlaylistsGet);
-        SC.get('/users/'+scUserID, drawUser);
+        SC.get('/users/'+OursoPhone.config.scUserID+'/playlists', OursoPhone.on.playlistsGet);
+        SC.get('/users/'+OursoPhone.config.scUserID, OursoPhone.ui.drawUser);
       },
       list: {
         dispatch: function(args) {
@@ -1327,7 +1110,7 @@ trackbox:hover .track-title .track_descspan
               Route.list.albumdispatch(args);
             break;
             case 'tag':
-              Route.play.tagdispatch(args);
+              Route.list.tagdispatch(args);
             break;
           }
         },
@@ -1340,7 +1123,7 @@ trackbox:hover .track-title .track_descspan
         },
         album: function(args) { 
           $('#playlist').attr('data-tag-id', 0);
-          SC.get('/playlists/' + args[1], onPlaylistLoaded);
+          SC.get('/playlists/' + args[1], OursoPhone.on.playlistLoaded);
         },
         tagdispatch:function(args) {
           // tag search
@@ -1352,7 +1135,7 @@ trackbox:hover .track-title .track_descspan
         },
         tag: function(args) {  
           $('#playlist').attr('data-tag-id', args[1]);
-          SC.get('/tracks/', { tags:args[1], filter:'streamable', order:'created_at' }, onTagListLoaded);
+          SC.get('/tracks/', { tags:args[1], filter:'streamable', order:'created_at' }, OursoPhone.on.tagListLoaded);
         }
    
       },
@@ -1385,825 +1168,890 @@ trackbox:hover .track-title .track_descspan
           // current album or other album ?
           if (args[1] != $('#playlist').attr('data-album-id')) {
             // different album, probably got here using a permalink, load tracks data into playlist
-            interfaceLock();
-            SC.get('/playlists/' + args[1], onPlaylistLoaded);
+            OursoPhone.utils.interfaceLock();
+            SC.get('/playlists/' + args[1], OursoPhone.on.playlistLoaded);
           }
         },
         tag: function(args) {  
           if (args[1] != $('#playlist').attr('data-tag-id')) {
             $('#playlist').attr('data-tag-id', args[1]);
-            SC.get('/tracks/', { tags:args[1], filter:'streamable', order:'created_at' }, onTagListLoaded);
+            SC.get('/tracks/', { tags:args[1], filter:'streamable', order:'created_at' }, OursoPhone.on.tagListLoaded);
           }
         },
         song: function(args) {
-          interfaceLock();
+          OursoPhone.utils.interfaceLock();
           $('#playlist').attr('data-song-id', args[3]);
-          SC.get('/tracks/' + args[3], onTrackInfo);
+          SC.get('/tracks/' + args[3], OursoPhone.on.trackInfo);
         }
       }
     };
     
     
-    
-    function listenToHashChange() {
-      window.onhashchange = onHashChanged;
-      //onHashChanged()
-      onRouteChanged();
-    }
-    
-    
-    
-    function onRouteChanged() {
-      var args = location.hash.replace('#', '').split(':');
-      
-      if(args.length==2) {
-        Route.list.dispatch(args);
-        return;
-      }
-      if(args.length==4) {
-        Route.play.dispatch(args);
-        return;
-      }
-      Route.default(args);
-    }
-    
-    
-    
-    
-    /*
-    function onHashChanged() {
-      
-      var args = location.hash.replace('#', '').split(':');
-      
-      switch(args.length) {
-        case 2:
-          // one arg pair
-          switch(args[0]) {
-            case 'album':
-              // album only
-              if (!(/^[0-9]+$/.test(args[1]))) {
-                console.warn('Route: bad hash entry');
-                return;
-              }
-              $('#playlist').attr('data-tag-id', 0);
-              SC.get('/playlists/' + args[1], onPlaylistLoaded);
-              //SC.get('/users/'+gard, drawUser);            
-            break;
-            
-            case 'tag':
-              // tag search
-              if (!(/^[a-z0-9 ]+$/i.test(args[1]))) {
-                console.warn('Route: bad hash entry');
-                return;
-              } 
-              $('#playlist').attr('data-tag-id', args[1]);
-              SC.get('/tracks/', { tags:args[1], filter:'streamable', order:'created_at' }, onTagListLoaded);
-            break;
+    var TemplateStore = {
+      init: function() {
+        var templates = document.querySelectorAll('script[type="text/html"]');
+        for(var tpl in templates) {
+          if(templates[tpl].id!==undefined) {
+            console.log('loading template ', templates[tpl].id);
+            TemplateStore.get(templates[tpl].id);
           }
-        break;
-        
-        case 4:
-          // album/tag and song
-          if (!(/^[a-z0-9 ]+$/i.test(args[1]))) {
-            console.warn('Route: bad hash entry');
-            return;
-          }
-          if (!(/^[0-9]+$/.test(args[3]))) {
-            console.warn('Route: bad hash entry');
-            return;
-          }
-          // check if the requested song is not already playing
-          if ( args[3] !=$('#playlist').attr('data-song-id') 
-            && args[3] !=$('#track-description trackbox[data-id="'+args[3]+'"]').attr('data-id') ) {
-            
-            interfaceLock();
-            $('#playlist').attr('data-song-id', args[3]);
-            SC.get('/tracks/' + args[3], onTrackInfo);
-          }        
-        
-          switch(args[0]) {
-            case 'album':
-              $('#playlist').attr('data-tag-id', 0);
-              // current album or other album ?
-              if (args[1] != $('#playlist').attr('data-album-id')) {
-                // different album, probably got here using a permalink, load tracks data into playlist
-                interfaceLock();
-                SC.get('/playlists/' + args[1], onPlaylistLoaded);
-              }
-            break;
-            case 'tag':
-              if (args[1] != $('#playlist').attr('data-tag-id')) {
-                $('#playlist').attr('data-tag-id', args[1]);
-                SC.get('/tracks/', {
-                  tags:args[1],
-                  filter:'streamable',
-                  order:'created_at'
-                }, onTagListLoaded);
-              }
-            break;
-          }
-          // also fill the user window with the current user's infos
-          //SC.get('/users/'+gard, drawUser);
-        break;
-        
-        default:
-          // not arguments given, show albums. TODO : play first song from first album ?
-          //console.log('Route: defaulting');
-          $('#playlist').attr('data-song-id', 0).attr('data-album-id', 0).attr('data-tag-id', 0);
-          SC.get('/users/'+scUserID+'/playlists', onPlaylistsGet);
-          SC.get('/users/'+scUserID, drawUser);
-      }
-
+        }
+      },
+      get: function(id) {
+        var $tpl;
+        //id = id.replace('#', '');
+        if(TemplateStore.store[id]!==undefined) {
+          return TemplateStore.store[id];
+        }
+        $tpl = document.querySelector('#'+id);
+        TemplateStore.store[id] = $tpl.innerHTML;
+        $tpl.remove();
+        return TemplateStore.store[id];
+      },
+      store: { }
     };
-    */
     
     
     
-    
-    
-    
-    
-    function onTagListLoaded(tracks) {
-      var $playlist = $("#playlist"), $viewModeControl;
-      $playlist.hide();
-      $playlist.html('').attr('data-album-id', 0).attr('data-display-mode', 'list');
+    var OursoPhone = {
+      config: {
+        scClientID: "0ec3a92db08c758a47397bf8d588a250",
+        scUserID: 61698493,
+        CORSRelay: false,
+        autoplay: true
+      },
+      currentPlayer: undefined,
+      currentTrack: undefined,
+      graphUpdater: undefined,
+      waveformData: undefined,
+      waveformWidth: undefined,
+      init: function() {
       
-      tracks.forEach( drawTracks );
-      setTimeout(onTagInserted, 300);
-      
-      $viewModeControl = $('#view-mode-control').html();
-      $($viewModeControl).css({
-        'top': '55px',
-        'right':'0',
-        'transform-origin': 'top right'
-      }).appendTo('#playlist');
-      
-      $('.display-mode-box div').off().on('click', function() {
-        var mode = this.className.split('-')[2];
-        if(mode==='up') {
-          location.href = '#';
-          //onHashChanged();
-          return false;
-        }
-        $('#playlist').attr('data-display-mode', mode);
-      });
-      
-      $('trackbox').off().on('click', function() {
-        if($(this).attr('data-href')!='') {
-          if(location.hash!=$(this).attr('data-href')) {
-            location.href = $(this).attr('data-href');
-            //onHashChanged();
+        // templating for the lazy
+        String.prototype.replaceArray = function(find, replace) {
+          var replaceString = this;
+          var regex; 
+          for (var i = 0; i < find.length; i++) {
+            regex = new RegExp(find[i], "g");
+            replaceString = replaceString.replace(regex, replace[i]);
           }
+          return replaceString;
+        };  
+      
+        var hasPhp = function() {
+          var req = new XMLHttpRequest();
+          // query self to get headers
+          req.open('HEAD', document.location, false);
+          req.send(null);
+          var headers = req.getAllResponseHeaders().toLowerCase();
+          // assume the relay is php
+          return !!/php/.test(headers);
         }
-        return false;
-      });
-      
-      $playlist.show();
-      interfaceRelease();
-    }
-    
-    
-    
-    function onPlaylistLoaded(playlist) { 
-      var $playlist = $("#playlist"), $currentSound, $viewModeControl;
-      $playlist.hide();
-      $playlist.html('').attr('data-album-id', playlist.id);
-
-      [playlist].forEach( drawAlbum );
-      
-      $viewModeControl = $('#view-mode-control').html();
-      $($viewModeControl).appendTo('#playlist');
-      
-      $('.display-mode-box div').off().on('click', function() {
-        var mode = this.className.split('-')[2];
-        if(mode==='up') {
-          location.href = '#';
-          //onHashChanged();
-          return false;
+        
+        if(hasPhp()) {
+          // enable waveform animated plugin
+          OursoPhone.config.CORSRelay = document.location.href;
         }
-        $('#playlist').attr('data-display-mode', mode);
-      });
       
-      playlist.tracks.forEach( drawTracks );
-      
-      setTimeout(onTagInserted, 300);
-      
-      $('trackbox,albumbox').off().on('click', function() {
-        if($(this).attr('data-href')!='') {
-          if(location.hash!=$(this).attr('data-href')) {
-            location.href = $(this).attr('data-href');
-            //onHashChanged();
-          }
+        window.onhashchange = OursoPhone.onRouteChanged;
+        //onHashChanged()
+        TemplateStore.init();
+        OursoPhone.onRouteChanged();
+        OursoPhone.ui.init();
+      },
+      onRouteChanged: function() {
+        var args = location.hash.replace('#', '').split(':');
+        
+        if(args.length==2) {
+          Route.list.dispatch(args);
+          return;
         }
-        return false;
-      });
-      
-      $('trackbox').removeClass('active');
-      
-      $playlist.show();
-      
-      if( $('#user-description .user-id').text() != playlist.user.id ) {
-        SC.get('/users/'+playlist.user.id, drawUser); 
-      }
-      
-      $currentSound = $('trackbox[data-index="'+ $playlist.attr('data-song-id') +'"]');
-      
-      if( $currentSound.length ) {
-        $currentSound.addClass('active');
-        if(window.currentTrack) {
-          drawTrack(window.currentTrack);
+        if(args.length==4) {
+          Route.play.dispatch(args);
+          return;
         }
-      } else {
-        // 
-      }
-      interfaceRelease();
-    }
-    
-    function onPlaylistsGet(playlists) {
-      var $playlist = $("#playlist");
-      $playlist.hide();
-      $playlist.html('').attr('data-album-id', null).attr('data-song-id', null);
-      playlists.forEach( drawAlbum );
-      $('albumbox').on('click', function() {
-        if($(this).attr('data-href')!='') {
-          if(location.hash!=$(this).attr('data-href')) {
-            location.href = $(this).attr('data-href');
-            //onHashChanged();
-          }
-        }
-        return false;
-      });
-      $playlist.show();
-    }
-    
-    function onDataWaveformReady() {
-      var currentPlayer = getCurrentPlayer();
-      var waveformData  = getCurrentWaveFormData();
-      var rgb, r, g, b;
-      
-      if(currentPlayer!==undefined && waveformData!==undefined) {
-      
-        var ratio = (currentPlayer.position / currentPlayer.duration);
-        var progress = (ratio*waveformWidth);
-        var waveformIndex = (ratio*1800).toFixed(0);
-        var waveformRatio = 0;
-        
-        waveformRatio = waveformData.samples[waveformIndex] / waveformData.height;
-        
-        r = 255-(255*waveformRatio).toFixed(0);
-        g = (255*waveformRatio).toFixed(0);
-        b = 255-(255*waveformRatio).toFixed(0);
-
-        rgb = "rgb("+ r +","+ g +","+ b +")";
-        
-        //document.getElementById('waveform').style.opacity = waveformRatio;
-        document.getElementById('animbox').style.height = waveformData.samples[waveformIndex] + 'px';
-        document.getElementById('animbox').style.backgroundColor = rgb;
-      
-      }
-      
-      requestAnimationFrame(onDataWaveformReady);
-    }
-    
-    
-    function onStreamReady(player, error) {
-   
-      window.currentPlayer = player;
-      $('#comments').empty();
-      
-      if( graphUpdater ) {
-        clearInterval( graphUpdater );
-        $('#canvas-overlay').css('box-shadow',  '0px 0 1px rgba(0, 255, 0, 0.4) inset');
-      }
-      playerApplyVolume();
-      graphUpdater = setInterval( songProgress, 500 );
-      interfaceRelease();
-      
-    }
-
-    
-    function onStreamFinished() {
-      if( graphUpdater!== undefined ) {
-        clearInterval( graphUpdater );
-        cancelAnimationFrame( onDataWaveformReady );
-        $('#canvas-overlay').css({'box-shadow': '0px 0 1px rgba(0, 255, 0, 0.4) inset', opacity:1});
-      }
-    
-      if(autoplay) {
-        // calculate next song
-        
-        $('[data-action="forward"]').trigger('click');
-        
-        // play next song
-      } else {
-        // song ended
-      }
-    }
-    
-    
-    function onTrackInfo(track, error) {
-      var url, urlImg, urlData,
-          currentPlayer = getCurrentPlayer(),
-          $img, imageObj;
-      
-      if(error!==null) {
-        console.warn('Error while loading track', error);
-        //$('#player-title').html( error.message );
-        $('#playlist').attr('data-album-id', null).attr('data-song-id', null);
-        location.href = '#';
-        //history.go(-1);
-        interfaceRelease();
-        return;
-      }
-      
-      currentTrack = track;
-      drawTrack(track);
-      
-      //$('#player-title').html( '' /*htmlEncode(track['title']) */);
-      //$('#player-description').html( '' /*htmlEncode(track['description']) */);
-      $('#playlist').attr('data-song-id', currentTrack.id);
-      
-      $('trackbox').removeClass('active');
-      $('trackbox[data-index="'+ currentTrack.id +'"]').addClass('active');
-      
-      if( currentPlayer ) {
-        currentPlayer.pause();
-        //audioManager.removeAudioPlayer( currentPlayer._id );
-      }
-      
-      SC.stream("/tracks/" + currentTrack.id, {
-        autoPlay: true,
-        usePeakData:true,
-        useWaveformData:true,
-        useEQData:true,
-        ontimedcomments: drawComment,
-        onloadedmetadata: function(data) {
-          console.log('loaded metadata', this, data);
+        Route.default(args);
+      },
+      utils: {
+        htmlEncode: function(string){
+          string = (string === null)?"":string.toString();
+          string = $('<div/>').text(string).html();
+          return string.replace(/\n/gi, '<br />\n');
+          //
         },
-        onbufferchange:function() {
-          //console.log('buffer change');
+        attrEncode: function(string) {
+          string = (string === null)?"":string.toString();
+          string = string.replace(/"/gi, '&quot;');
+          return string.replace(/\n/gi, '<br />\n');
         },
-        whileloading:function() {
-        /*
-            if(this._a===undefined) return;
-            console.log('while loading', this);
-            audio = this._a;
+        interfaceLock: function() {
+          $('body').addClass('locked');
+        },
+        interfaceRelease: function() {
+          $('body').removeClass('locked');
+        }
+      },
+      player: {
+        pause: function() {
+          var currentPlayer = OursoPhone.player.getCurrent()
+          if(currentPlayer) {
+            currentPlayer.pause();
+          }
+          OursoPhone.utils.interfaceRelease()
+        },        
+        play: function() {
+          var currentPlayer = OursoPhone.player.getCurrent()
+          if(currentPlayer) {
+            currentPlayer.play();
+          }
+          OursoPhone.utils.interfaceRelease();
+        },        
+        next: function() {
+          var tracks = $('#playlist .track trackbox'),
+              currentTrack = $('#playlist').attr('data-song-id'),
+              nextTrackHash = false,
+              album_id,
+              track_id;
+              
+          if(!tracks.length) {
+            OursoPhone.utils.interfaceRelease();
+            return;      
+          }
+          
+          $(tracks).each(function(trackIndex) {
+          
+            var linkType = '';
+            var linkVal = '';
             
-            audio.volume = 1/3;
-            audio.controls = true;
-            
-            audio.addEventListener('canplay', function() {
-                // Timing issue with Chrome - if console opened, audioprocess stops firing during playback?
-                // a timeout here seems to help, but does not completely fix.
-                window.setTimeout(function() {
-                    connect();
-                }, 20);
-            }, false);*/
+            if( $('#playlist').attr('data-tag-id')!=0 ) {
+              linkType = 'tag';
+              linkVal = $("#playlist").attr('data-tag-id')
+            } else {
+              linkType = 'album';
+              linkVal = $("#playlist").attr('data-album-id');
+            }
+          
+            if( $(this).attr('data-id') == currentTrack ) {
+              if( trackIndex+1 < tracks.length ) {
+                album_id = $('#playlist').attr('data-album-id');
+                track_id = $(tracks[trackIndex+1]).attr('data-id');
+                if(album_id===undefined) return;
+                if(track_id===undefined || track_id===null) return;
+                nextTrackHash = '#'+linkType+':' + linkVal
+                              + ':track:' + $(tracks[trackIndex+1]).attr('data-id');
+              }
+            }
+          });
+          if(nextTrackHash) {
+            location.href = nextTrackHash;
+            //onHashChanged();
+          } else {
+            OursoPhone.utils.interfaceRelease();
+          }
         },
-        whileplaying: function () {
-          //console.log("track is playing", this._a, this._a.onaudioprocess );
-          if(this._a.onaudioprocessattached===undefined) {
-            console.log('attaching context', this);
+        prev: function() {
+          var tracks = $('#playlist .track trackbox'),
+              currentTrack = $('#playlist').attr('data-song-id'),
+              prevTrackHash = false,
+              album_id,
+              track_id;
 
+          if(!tracks.length) {
+            OursoPhone.utils.interfaceRelease();
+            return;      
+          }
+          
+          $(tracks).each(function(trackIndex) {
+          
+            var linkType = '';
+            var linkVal = '';
+            
+            if( $('#playlist').attr('data-tag-id')!=0 ) {
+              linkType = 'tag';
+              linkVal = $("#playlist").attr('data-tag-id')
+            } else {
+              linkType = 'album';
+              linkVal = $("#playlist").attr('data-album-id');
+            }
+          
+            if( $(this).attr('data-id') == currentTrack ) {
+              if( trackIndex-1 >= 0 ) {
+                album_id = $('#playlist').attr('data-album-id');
+                track_id = $(tracks[trackIndex-1]).attr('data-id');
+                if(album_id===undefined) return;
+                if(track_id===undefined || track_id===null) return;
+                prevTrackHash = '#'+linkType+':' + linkVal
+                              + ':track:' + $(tracks[trackIndex-1]).attr('data-id');
+              }
+            }
+          });
+          if(prevTrackHash) {
+            location.href = prevTrackHash;
+            //onHashChanged();
+          } else {
+            OursoPhone.utils.interfaceRelease();
+          }
+        },
+        applyVolume: function() {
+          $('input[data-action="setvolume"]').trigger('change');
+        },
+        setVolume: function(newVolume) {
+          var currentPlayer = OursoPhone.player.getCurrent();
+          if(currentPlayer===undefined) {
+            console.warn('attempt to change volume on undefined player', newVolume);
+          } else {
+            currentPlayer.setVolume( newVolume );
+          }
+        },
+        getCurrent: function() {
+          return OursoPhone.currentPlayer;
+        },
+        getWaveFormData: function() {
+          return OursoPhone.waveformData;
+        },
+        setWaveformData: function(waveformData) {
+          OursoPhone.waveformData = waveformData;
+        },
+        songProgress: function() {
+          var currentPlayer = OursoPhone.player.getCurrent();
+          if(currentPlayer===undefined) return;
+          var ratio = (currentPlayer.position / currentPlayer.duration);
+          var state = currentPlayer.playState;
+          var progress = (ratio*OursoPhone.waveformWidth);
+          var chroma = document.getElementById('animbox').style.backgroundColor;
+          if(ratio===1) {
+            OursoPhone.on.streamFinished();
+          } else {
+            $('#canvas-overlay').css({'box-shadow':  progress.toFixed(0) + 'px 0 1px '+ chroma +' inset'});
+          }
+          
+          state = currentPlayer.playState === 1 ? 'playing' : state;
+          state = currentPlayer.isBuffering === true ? 'loading' : state;
+          state = currentPlayer.paused === true ? 'paused' : state;
+          
+          $('#player-state,#controls').attr({
+            'class': state,
+            'data-state': state
+          });
+        }
+      },
+      on: {
+        tagListLoaded: function(tracks) {
+          var $playlist = $("#playlist"), $viewModeControl;
+          $playlist.hide();
+          $playlist.html('').attr('data-album-id', 0).attr('data-display-mode', 'list');
+          
+          tracks.forEach( OursoPhone.ui.drawTracks );
+          setTimeout(OursoPhone.on.tagInserted, 300);
+          
+          $viewModeControl = TemplateStore.get('view-mode-control');
+          $($viewModeControl).css({
+            'top': '55px',
+            'right':'0',
+            'transform-origin': 'top right'
+          }).appendTo('#playlist');
+          
+          $('.display-mode-box div').off().on('click', function() {
+            var mode = this.className.split('-')[2];
+            if(mode==='up') {
+              location.href = '#';
+              //onHashChanged();
+              return false;
+            }
+            $('#playlist').attr('data-display-mode', mode);
+          });
+          
+          $('trackbox').off().on('click', function() {
+            if($(this).attr('data-href')!='') {
+              if(location.hash!=$(this).attr('data-href')) {
+                location.href = $(this).attr('data-href');
+                //onHashChanged();
+              }
+            }
+            return false;
+          });
+          
+          $playlist.show();
+          OursoPhone.utils.interfaceRelease();
+        },
+        playlistLoaded:  function(playlist) {
+          var $playlist = $("#playlist"), $currentSound, $viewModeControl;
+          $playlist.hide();
+          $playlist.html('').attr('data-album-id', playlist.id);
+
+          [playlist].forEach( OursoPhone.ui.drawAlbum );
+          
+          $viewModeControl = TemplateStore.get('view-mode-control');
+          $($viewModeControl).appendTo('#playlist');
+          
+          $('.display-mode-box div').off().on('click', function() {
+            var mode = this.className.split('-')[2];
+            if(mode==='up') {
+              location.href = '#';
+              //onHashChanged();
+              return false;
+            }
+            $('#playlist').attr('data-display-mode', mode);
+          });
+          
+          playlist.tracks.forEach( OursoPhone.ui.drawTracks );
+          
+          setTimeout(OursoPhone.on.tagInserted, 300);
+          
+          $('trackbox,albumbox').off().on('click', function() {
+            if($(this).attr('data-href')!='') {
+              if(location.hash!=$(this).attr('data-href')) {
+                location.href = $(this).attr('data-href');
+                //onHashChanged();
+              }
+            }
+            return false;
+          });
+          
+          $('trackbox').removeClass('active');
+          
+          $playlist.show();
+          
+          if( $('#user-description .user-id').text() != playlist.user.id ) {
+            SC.get('/users/'+playlist.user.id, OursoPhone.ui.drawUser); 
+          }
+          
+          $currentSound = $('trackbox[data-index="'+ $playlist.attr('data-song-id') +'"]');
+          
+          if( $currentSound.length ) {
+            $currentSound.addClass('active');
+            if(OursoPhone.currentTrack) {
+              OursoPhone.ui.drawTrack(OursoPhone.currentTrack);
+            }
+          } else {
+            // 
+          }
+          OursoPhone.utils.interfaceRelease();
+        },
+        playlistsGet: function(playlists) {
+          var $playlist = $("#playlist");
+          $playlist.hide();
+          $playlist.html('').attr('data-album-id', null).attr('data-song-id', null);
+          playlists.forEach( OursoPhone.ui.drawAlbum );
+          $('albumbox').on('click', function() {
+            if($(this).attr('data-href')!='') {
+              if(location.hash!=$(this).attr('data-href')) {
+                location.href = $(this).attr('data-href');
+                //onHashChanged();
+              }
+            }
+            return false;
+          });
+          $playlist.show();
+        },
+        dataWaveformReady: function() {
+          var currentPlayer = OursoPhone.player.getCurrent();
+          var waveformData  = OursoPhone.player.getWaveFormData();
+          var rgb, r, g, b;
+          
+          if(currentPlayer!==undefined && waveformData!==undefined) {
+          
+            var ratio = (currentPlayer.position / currentPlayer.duration);
+            var progress = (ratio*OursoPhone.waveformWidth);
+            var waveformIndex = (ratio*1800).toFixed(0);
+            var waveformRatio = 0;
+            
+            waveformRatio = waveformData.samples[waveformIndex] / waveformData.height;
+            
+            r = 255-(255*waveformRatio).toFixed(0);
+            g = (255*waveformRatio).toFixed(0);
+            b = 255-(255*waveformRatio).toFixed(0);
+
+            rgb = "rgb("+ r +","+ g +","+ b +")";
+            
+            //document.getElementById('waveform').style.opacity = waveformRatio;
+            document.getElementById('animbox').style.height = waveformData.samples[waveformIndex] + 'px';
+            document.getElementById('animbox').style.backgroundColor = rgb;
+          
+          }
+          
+          requestAnimationFrame(OursoPhone.on.dataWaveformReady);
+        },
+        streamReady: function(player, error) {
+      
+          OursoPhone.currentPlayer = player;
+          $('#comments').empty();
+          
+          if( OursoPhone.graphUpdater ) {
+            clearInterval( OursoPhone.graphUpdater );
+            $('#canvas-overlay').css('box-shadow',  '0px 0 1px rgba(0, 255, 0, 0.4) inset');
+          }
+          OursoPhone.player.applyVolume();
+          OursoPhone.graphUpdater = setInterval( OursoPhone.player.songProgress, 500 );
+          OursoPhone.utils.interfaceRelease();
+        },        
+        streamFinished: function() {
+          if( OursoPhone.graphUpdater!== undefined ) {
+            clearInterval( OursoPhone.graphUpdater );
+            cancelAnimationFrame( OursoPhone.on.dataWaveformReady );
+            $('#canvas-overlay').css({'box-shadow': '0px 0 1px rgba(0, 255, 0, 0.4) inset', opacity:1});
+          }
+        
+          if(OursoPhone.config.autoplay) {
+            // calculate next song
+            
+            $('[data-action="forward"]').trigger('click');
+            
+            // play next song
+          } else {
+            // song ended
+          }
+        },
+        trackInfo: function(track, error) {
+          var url, urlImg, urlData,
+              currentPlayer = OursoPhone.player.getCurrent(),
+              $img, imageObj;
+          
+          if(error!==null) {
+            console.warn('Error while loading track', error);
+            //$('#player-title').html( error.message );
+            $('#playlist').attr('data-album-id', null).attr('data-song-id', null);
+            location.href = '#';
+            //history.go(-1);
+            OursoPhone.utils.interfaceRelease();
+            return;
+          }
+          
+          OursoPhone.currentTrack = track;
+          OursoPhone.ui.drawTrack(track);
+          
+          //$('#player-title').html( '' /*OursoPhone.utils.htmlEncode(track['title']) */);
+          //$('#player-description').html( '' /*OursoPhone.utils.htmlEncode(track['description']) */);
+          $('#playlist').attr('data-song-id', OursoPhone.currentTrack.id);
+          
+          $('trackbox').removeClass('active');
+          $('trackbox[data-index="'+ OursoPhone.currentTrack.id +'"]').addClass('active');
+          
+          if( currentPlayer ) {
+            currentPlayer.pause();
+            //audioManager.removeAudioPlayer( currentPlayer._id );
+          }
+          
+          SC.stream("/tracks/" + OursoPhone.currentTrack.id, {
+            autoPlay: true,
+            usePeakData:true,
+            useWaveformData:true,
+            useEQData:true,
+            ontimedcomments: OursoPhone.ui.drawComment,
+            onloadedmetadata: function(data) {
+              console.log('loaded metadata', this, data);
+            },
+            onbufferchange:function() {
+              //console.log('buffer change');
+            },
+            whileloading:function() {
             /*
-            setTimeout(function() {
-              //connect()
-            }, 2500);*/
-            this._a.onaudioprocessattached = true;
+                if(this._a===undefined) return;
+                console.log('while loading', this);
+                audio = this._a;
+                
+                audio.volume = 1/3;
+                audio.controls = true;
+                
+                audio.addEventListener('canplay', function() {
+                    // Timing issue with Chrome - if console opened, audioprocess stops firing during playback?
+                    // a timeout here seems to help, but does not completely fix.
+                    window.setTimeout(function() {
+                        connect();
+                    }, 20);
+                }, false);*/
+            },
+            whileplaying: function () {
+              //console.log("track is playing", this._a, this._a.onaudioprocess );
+              if(this._a.onaudioprocessattached===undefined) {
+                console.log('attaching context', this);
+                /*
+                setTimeout(function() {
+                  //connect()
+                }, 2500);*/
+                this._a.onaudioprocessattached = true;
+              }
+              //console.log(this.peakData[0]);
+            }
+          }, OursoPhone.on.streamReady);
+          
+          // urlImg  = track.waveform_url.replace('http://', '');
+          // urlImg  = track.waveform_url.replace('https://', '');
+          
+          SC.get('/users/'+track.user.id, OursoPhone.ui.drawUser);
+          
+          $img = $('<img class="waveform-img" />');
+            
+          $img.on('error', function() {
+            // transparent pixel
+            $img.attr('src', "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+          });
+
+          $img.on('load', function() {
+            OursoPhone.waveformWidth = $(this).width();
+          });
+          
+          $img.attr('src', track.waveform_url);
+          $('#canvas-overlay').empty().append($img);
+
+          if(OursoPhone.config.CORSRelay!==false) {
+            // enable waveform animated plugin
+            urlData = track.waveform_url.replace('http://w1', 'wis');
+            urlData = track.waveform_url.replace('https://w1', 'wis');
+            
+            $.get('<?=basename(__FILE__);?>?w=' + urlData, function(data) {
+              waveformData = JSON.parse(data);
+              //console.log('storing waveformData', waveformData);
+              OursoPhone.player.setWaveformData(waveformData);
+              if(waveformData!==undefined) {
+                cancelAnimationFrame( OursoPhone.on.dataWaveformReady );
+                requestAnimationFrame(OursoPhone.on.dataWaveformReady);
+              } else {
+                alert('dahoops');
+              }
+            })
           }
-          //console.log(this.peakData[0]);
-        }
-      }, onStreamReady);
-      
-      urlImg  = track.waveform_url.replace('http://', '');
-      urlImg  = track.waveform_url.replace('https://', '');
-      urlData = track.waveform_url.replace('http://w1', 'wis');
-      urlData = track.waveform_url.replace('https://w1', 'wis');
-      
-      SC.get('/users/'+track.user.id, drawUser);
-      
-      $img = $('<img class="waveform-img" />');
-        
-      $img.on('error', function() {
-        // transparent pixel
-        $img.attr('src', "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
-      });
-
-      $img.on('load', function() {
-        waveformWidth = $(this).width();
-      });
-      
-      $img.attr('src', track.waveform_url);
-      $('#canvas-overlay').empty().append($img);
-
-      if(CORSRelay!==false) {
-      
-        $.get('<?=basename(__FILE__);?>?w=' + urlData, function(data) {
-          waveformData = JSON.parse(data);
-          //console.log('storing waveformData', waveformData);
-          setWaveformData(waveformData);
-          if(waveformData!==undefined) {
-            cancelAnimationFrame( onDataWaveformReady );
-            requestAnimationFrame(onDataWaveformReady);
-          } else {
-            alert('dahoops');
-          }
-        })
-        
-      }
-      
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    function drawAlbum(album) {
-      var $albumpicture, 
-          $albumtpl = $('#album-item').html(),
-          albumTagList;
-      var html ='';
-      
-      if(album.streamable!==true) {
-        console.warn('album is not sreamable', album);
-        return;
-      }
-      if(album.embeddable_by!=='all') {
-        console.warn('album is not embeddable', album);
-        return;
-      }
-      
-      if(album.downloadable===true) {
-        console.info('album "'+album.title+'" is downloadable');
-        // set download link
-      }
-      
-      if (album.artwork_url != null && album.artwork_url.length > 0) {
-        /* templating */
-        $albumpicture = $('#album-picture').html().replaceArray(
-          ["{album-cover}"],
-          [album.artwork_url]
-        );
-      } else {
-        $albumpicture = $('#album-no-picture').html();
-      }
-      
-      if(album.tag_list=='') {
-        albumTagList = '';
-      } else {
-        albumTagList = '<tag>' + album.tag_list.match(/(".*?")|(\S+)/g).join('</tag><tag>') + '</tag>';
-      }
-      
-      //console.log('atl', album.tag_list);
-      
-      html = $albumtpl.replaceArray([
-        "{album-kind}",
-        "{album-createdat}",
-        "{album-duration}",
-        "{album-taglist}",
-        "{album-trackcount}",
-        "{album-genre}",
-        "{album-url}",
-        "{album-index}",
-        "{album-title}",
-        "{album-description}",
-        "{album-cover}",
-        "{album-picture}"
-      ],[
-        album.kind,
-        album.created_at,
-        new Date(album.duration).getMinutes() + 'mn' + ( new Date(album.duration).getSeconds()%60 ) + 's',
-        albumTagList,
-        album.track_count,
-        album.genre,
-        '#album:' + album.id,
-        album.id,
-        album.title,
-        album.description,
-        album.artwork_url,
-        $albumpicture
-      ]);
-      
-      $(html).appendTo('#playlist');
-      setTimeout(onTagInserted, 300);
-    }
-    
-    
-    
-    function drawTracks(track, index, thisArg){
-      // thisArg => all tracks
-      var attributes = '';
-      var $tracktpl = $('#track-item').html();
-      var $trackpicture;
-      var html = '';
-      var linkType = '';
-      var linkVal = '';
-      var trackTagList = '';
-      
-      if( $('#playlist').attr('data-tag-id')!=0 ) {
-        linkType = 'tag';
-        linkVal = $("#playlist").attr('data-tag-id')
-      } else {
-        linkType = 'album';
-        linkVal = $("#playlist").attr('data-album-id');
-      }
-
-      
-      if(track.streamable!==true) {
-        console.warn('track is not sreamable', track);
-        return;
-      }
-      if(track.embeddable_by!=='all') {
-        console.warn('track is not embeddable', track);
-        return;
-      }
-      
-      if(track.downloadable===true) {
-        console.info('track "'+track.title+'" is downloadable');
-        // set download link
-      }
-      
-      // build attributes list
-      ['id', 'title', 'uri', 'duration', 'commentable', 'description', 'artwork_url'].forEach(function(attr) {
-        attributes += 'data-' + attr + '="' + attrEncode(track[attr]) + '" ';
-      });
-      
-      if (track.artwork_url != null && track.artwork_url.length > 0) {
-        /* templating */
-        $trackpicture = $('#track-picture').html().replaceArray(
-          ["{track-artwork-url}", "{track-title}"],
-          [track.artwork_url, htmlEncode(track.title)]
-        );
-      } else {
-        $trackpicture = $('#track-no-picture').html();
-      }
-      
-      if(track.tag_list=='') {
-        trackTagList = '';
-      } else {
-        trackTagList = '<tag>' + track.tag_list.match(/(".*?")|(\S+)/g).join('</tag><tag>') + '</tag>';
-      }
-      
-      /* templating */
-      html = $tracktpl.replaceArray([
-          "{track-createdat}",
-          "{track-duration}",
-          "{track-taglist}",
-          "{track-genre}",
-          "{track-description}",
-          "{track-tracktype}",
-          "{track-permalinkurl}",
-          "{album-url}",
-          "{data-attributes}",
-          "{data-index}",
-          "{track-picture}",
-          "{track-title}"
-        ],[
-          track.created_at,
-          new Date(track.duration).getMinutes() + 'mn' + ( new Date(track.duration).getSeconds()%60 ) + 's',
-          trackTagList,
-          track.genre,
-          track.description,
-          track.track_type,
-          track.permalink_url,
-          '#'+linkType+':'+ linkVal + ':track:'+ track.id,
-          attributes,
-          track.id,
-          $trackpicture,
-          htmlEncode(track.title)
-      ]);
-      
-      $(html).appendTo('#playlist');
-    }
-    
-    
-    function drawTrack(track) {
-      var trackBox = $('trackbox[data-index="'+ track.id +'"]').clone();
-      if(!trackBox.length) {
-        console.log('should query api');
-      }
-      if(track.streamable!==true) {
-        console.warn('track is not sreamable', track);
-        return;
-      }
-      if(track.embeddable_by!=='all') {
-        console.warn('track is not embeddable', track);
-        return;
-      }
-      $(trackBox).addClass('full-view').removeClass('active');
-      $('#track-description').empty().append( trackBox );
-      setTimeout(onTagInserted, 300);
-    }
-    
-    
-    function drawComment(comments){
-      var firstComment = comments[0];
-      var userComment, blockComment, userAvatar, userLink;
-      var text = "";
-      var $comments = $('#comments');
-      
-      userAvatar = $('<img/>').attr({
-        'src': firstComment.user.avatar_url,
-        'align': 'left',
-        'alt': firstComment.user.username,
-        'title': firstComment.user.username
-      }).css({maxWidth:"1.2em"});
-      
-      userLink = $('<a></a>').attr({
-        target:"_blank",
-        href:firstComment.user.permalink_url
-      });
-      
-      userAvatar.appendTo(userLink);
-      
-      userComment = $('<span class="comment-text"></span>').text('(@' +Math.floor(firstComment.timestamp / 1000) + "s): "+ firstComment.body);
-      blockComment = $('<li/>').append(userLink).append(userComment).attr('data-id', firstComment.id);
-      
-      if(! $('#comments li[data-id="'+ firstComment.id +'"]').length) {
-        blockComment.appendTo('#comments');
-      }
-      $comments.stop(true, true).animate({scrollTop: $comments.prop("scrollHeight")}, 300);
-    }
-
-    
-    function resolveUser(searchStr, callback) {
-      searchStr = searchStr.replace(/ /g, '-');
-      console.log('will resolve', searchStr);
-      SC.get('/resolve', {
-        url: 'https://soundcloud.com/' + searchStr
-      }, function(user, error) {
-        if(error) {
-          console.log('HTTP Error', error);
-        } else {
+        },
+        userResolved: function(user) {
           if(user.id) {
-            callback(user);
-          } else {
-            console.log('nothing found');
+            OursoPhone.config.scUSerID = user.id;
+            location.href = '#';
           }
+        },
+        tagInserted: function() {
+          $('tag').off().on('click', function() {
+            // console.log($(this).text());
+            var cleanStr = $(this).text().replace(/[^a-z0-9 ]+/gi, '');
+            if(cleanStr!='') {
+              cleanStr = cleanStr.toLowerCase();
+              location.href='#tag:'+cleanStr;
+              return false;
+            }
+          });
         }
-      });
-    }
-    
-    
-    function drawUser(user, error) {
-      var $usertpl = $('#user-item').html();
-      var html = '';
-      
-      html = $usertpl.replaceArray([    
-        "{user-id}",
-        "{user-kind}",
-        "{user-fullname}",
-        "{user-permalinkurl}",
-        "{user-avatarurl}",
-        "{user-description}",
-        "{user-website}",
-        "{user-websitetitle}",
-        "{user-trackcount}",
-        "{user-playlistcount}",
-        "{user-followerscount}",
-        "{user-followingcount}"
-      ],[            
-        user.id,
-        user.kind,
-        user.full_name,
-        user.permalink_url,
-        user.avatar_url,
-        user.description,
-        user.website,
-        user.website_title,
-        user.track_count,
-        user.playlist_count,
-        user.followers_count,
-        user.followings_count
-      ]);
-      
-      $('#user-description').html(html);
-    }
-    
-    
-    function onUserResolved(user) {
-      if(user.id) {
-        scUSerID = user.id;
-        location.href = '#';
-        //onHashChanged();
+      },
+      ui: {
+        init: function() {
+          // Get the canvas & its context, width, and height.
+          $('#canvas-overlay').on('mousedown', function(evt) {
+            var pos = (evt.pageX - $(this).offset().left) / $(this).width();
+            var currentPlayer = OursoPhone.player.getCurrent();
+            var currentduration = currentPlayer.duration;
+            var newPosition = (currentduration*pos).toFixed(0);
+            currentPlayer.setPosition(newPosition);
+          });
+          
+          $('.search-button').on('click', function() {
+            var user;
+            if(user = prompt('Load playlist from user : ')) {
+              OursoPhone.ui.resolveUser(user, OursoPhone.on.userResolved)
+            }
+          });
+          
+          $('input[data-action="setvolume"]').on('change', function() {
+            OursoPhone.player.setVolume( $(this).val()*100 );
+          });
+          
+          $('#controls .player-button').on('click', function(evt) {
+            evt.preventDefault();
+            OursoPhone.utils.interfaceLock();
+            var that = $(this);
+            switch(that.attr('data-action')) {
+              case 'play':
+                OursoPhone.player.play();
+              break;
+              case 'pause':
+                OursoPhone.player.pause();
+              break;
+              case 'backward':
+                OursoPhone.player.prev();
+              break;
+              case 'forward':
+                OursoPhone.player.next()
+              break;
+            }
+            return false;
+          });
+          
+          $('.volume-control label').on('click', function() {
+            var $volumeControl = $('[data-action="setvolume"]');
+            var currentVolume = 0- -$volumeControl.val();
+            var maxVolume     = 0- -$volumeControl.prop('max');
+            var minVolume     = 0- -$volumeControl.prop('min');
+            var step          = 0- -$volumeControl.prop('step');
+            var newVolume;
+            
+            //console.log(currentVolume, maxVolume, minVolume, step);
+            
+            switch( $(this).html() ) {
+              case '+':
+                if( ( currentVolume + step ) <= maxVolume ) {
+                  newVolume = currentVolume + 0 + step;
+                }
+              break;
+              case '-':
+                if( ( currentVolume - step ) >= minVolume ) {
+                  newVolume = currentVolume - step;
+                }
+              break;
+            }
+            if(newVolume!==undefined) {
+              //console.log('new volume', newVolume);
+              $volumeControl.val(newVolume).trigger('change');
+            }
+          });        
+        },
+        drawAlbum: function(album) {
+          var $albumpicture, 
+              $albumtpl = TemplateStore.get('album-item'),
+              albumTagList;
+          var html ='';
+          
+          if(album.streamable!==true) {
+            console.warn('album is not sreamable', album);
+            return;
+          }
+          if(album.embeddable_by!=='all') {
+            console.warn('album is not embeddable', album);
+            return;
+          }
+          if(album.downloadable===true) {
+            console.info('album "'+album.title+'" is downloadable');
+            // set download link?
+          }
+          if (album.artwork_url != null && album.artwork_url.length > 0) {
+            /* templating */
+            $albumpicture = TemplateStore.get('album-picture').replaceArray(
+              ["{album-cover}"],
+              [album.artwork_url]
+            );
+          } else {
+            $albumpicture = TemplateStore.get('album-no-picture');
+          }
+          if(album.tag_list=='') {
+            albumTagList = '';
+          } else {
+            albumTagList = '<tag>' + album.tag_list.match(/(".*?")|(\S+)/g).join('</tag><tag>') + '</tag>';
+          }
+          
+          html = $albumtpl.replaceArray([
+            "{album-kind}",
+            "{album-createdat}",
+            "{album-duration}",
+            "{album-taglist}",
+            "{album-trackcount}",
+            "{album-genre}",
+            "{album-url}",
+            "{album-index}",
+            "{album-title}",
+            "{album-description}",
+            "{album-cover}",
+            "{album-picture}"
+          ],[
+            album.kind,
+            album.created_at,
+            new Date(album.duration).getMinutes() + 'mn' + ( new Date(album.duration).getSeconds()%60 ) + 's',
+            albumTagList,
+            album.track_count,
+            album.genre,
+            '#album:' + album.id,
+            album.id,
+            album.title,
+            album.description,
+            album.artwork_url,
+            $albumpicture
+          ]);
+          
+          $(html).appendTo('#playlist');
+          setTimeout(OursoPhone.on.tagInserted, 300);
+        },
+        drawTracks: function(track, index, thisArg) {
+          // thisArg => all tracks
+          var attributes = '';
+          var $tracktpl = TemplateStore.get('track-item');
+          var $trackpicture;
+          var html = '';
+          var linkType = '';
+          var linkVal = '';
+          var trackTagList = '';
+          
+          if( $('#playlist').attr('data-tag-id')!=0 ) {
+            linkType = 'tag';
+            linkVal = $("#playlist").attr('data-tag-id')
+          } else {
+            linkType = 'album';
+            linkVal = $("#playlist").attr('data-album-id');
+          }
+          if(track.streamable!==true) {
+            console.warn('track is not sreamable', track);
+            return;
+          }
+          if(track.embeddable_by!=='all') {
+            console.warn('track is not embeddable', track);
+            return;
+          }
+          if(track.downloadable===true) {
+            console.info('track "'+track.title+'" is downloadable');
+            // set download link?
+          }
+          // build attributes list
+          ['id', 'title', 'uri', 'duration', 'commentable', 'description', 'artwork_url'].forEach(function(attr) {
+            attributes += 'data-' + attr + '="' + OursoPhone.utils.attrEncode(track[attr]) + '" ';
+          });
+          if (track.artwork_url != null && track.artwork_url.length > 0) {
+            /* templating */
+            $trackpicture = TemplateStore.get('track-picture').replaceArray(
+              ["{track-artwork-url}", "{track-title}"],
+              [track.artwork_url, OursoPhone.utils.htmlEncode(track.title)]
+            );
+          } else {
+            $trackpicture = TemplateStore.get('track-no-picture');
+          }
+          if(track.tag_list=='') {
+            trackTagList = '';
+          } else {
+            trackTagList = '<tag>' + track.tag_list.match(/(".*?")|(\S+)/g).join('</tag><tag>') + '</tag>';
+          }
+          /* templating */
+          html = $tracktpl.replaceArray([
+              "{track-createdat}",
+              "{track-duration}",
+              "{track-taglist}",
+              "{track-genre}",
+              "{track-description}",
+              "{track-tracktype}",
+              "{track-permalinkurl}",
+              "{album-url}",
+              "{data-attributes}",
+              "{data-index}",
+              "{track-picture}",
+              "{track-title}"
+            ],[
+              track.created_at,
+              new Date(track.duration).getMinutes() + 'mn' + ( new Date(track.duration).getSeconds()%60 ) + 's',
+              trackTagList,
+              track.genre,
+              track.description,
+              track.track_type,
+              track.permalink_url,
+              '#'+linkType+':'+ linkVal + ':track:'+ track.id,
+              attributes,
+              track.id,
+              $trackpicture,
+              OursoPhone.utils.htmlEncode(track.title)
+          ]);
+          $(html).appendTo('#playlist');
+        },
+        drawTrack: function(track) {
+          var trackBox = $('trackbox[data-index="'+ track.id +'"]').clone();
+          if(!trackBox.length) {
+            console.log('should query api');
+          }
+          if(track.streamable!==true) {
+            console.warn('track is not sreamable', track);
+            return;
+          }
+          if(track.embeddable_by!=='all') {
+            console.warn('track is not embeddable', track);
+            return;
+          }
+          $(trackBox).addClass('full-view').removeClass('active');
+          $('#track-description').empty().append( trackBox );
+          setTimeout(OursoPhone.on.tagInserted, 300);
+        },
+        drawComment: function(comments){
+          var firstComment = comments[0];
+          var userComment, blockComment, userAvatar, userLink;
+          var text = "";
+          var $comments = $('#comments');
+          
+          userAvatar = $('<img/>').attr({
+            'src': firstComment.user.avatar_url,
+            'align': 'left',
+            'alt': firstComment.user.username,
+            'title': firstComment.user.username
+          }).css({maxWidth:"1.2em"});
+          
+          userLink = $('<a></a>').attr({
+            target:"_blank",
+            href:firstComment.user.permalink_url
+          });
+          
+          userAvatar.appendTo(userLink);
+          
+          userComment = $('<span class="comment-text"></span>').text('(@' +Math.floor(firstComment.timestamp / 1000) + "s): "+ firstComment.body);
+          blockComment = $('<li/>').append(userLink).append(userComment).attr('data-id', firstComment.id);
+          
+          if(! $('#comments li[data-id="'+ firstComment.id +'"]').length) {
+            blockComment.appendTo('#comments');
+          }
+          $comments.stop(true, true).animate({scrollTop: $comments.prop("scrollHeight")}, 300);
+        },
+        resolveUser: function(searchStr, callback) {
+          searchStr = searchStr.replace(/ /g, '-');
+          console.log('will resolve', searchStr);
+          SC.get('/resolve', {
+            url: 'https://soundcloud.com/' + searchStr
+          }, function(user, error) {
+            if(error) {
+              console.log('HTTP Error', error);
+            } else {
+              if(user.id) {
+                callback(user);
+              } else {
+                console.log('nothing found');
+              }
+            }
+          });
+        },
+        drawUser: function(user, error) {
+          var $usertpl = TemplateStore.get('user-item');
+          var html = '';
+          
+          html = $usertpl.replaceArray([    
+            "{user-id}",
+            "{user-kind}",
+            "{user-fullname}",
+            "{user-permalinkurl}",
+            "{user-avatarurl}",
+            "{user-description}",
+            "{user-website}",
+            "{user-websitetitle}",
+            "{user-trackcount}",
+            "{user-playlistcount}",
+            "{user-followerscount}",
+            "{user-followingcount}"
+          ],[            
+            user.id,
+            user.kind,
+            user.full_name,
+            user.permalink_url,
+            user.avatar_url,
+            user.description,
+            user.website,
+            user.website_title,
+            user.track_count,
+            user.playlist_count,
+            user.followers_count,
+            user.followings_count
+          ]);
+          $('#user-description').html(html);
+        }
       }
-    }
+    };
     
-    
-    function onTagInserted() {
-      $('tag').off().on('click', function() {
-        // console.log($(this).text());
-        var cleanStr = $(this).text().replace(/[^a-z0-9 ]+/gi, '');
-        if(cleanStr!='') {
-          cleanStr = cleanStr.toLowerCase();
-          location.href='#tag:'+cleanStr;
-          //onHashChanged();
-          return false;
-        }
-      });
-    }
-    
-    
-    
-    
+   
     
     
 (function(){
 
-    var hasPhp = function() {
-      var req = new XMLHttpRequest();
-      req.open('HEAD', document.location, false);
-      req.send(null);
-      var headers = req.getAllResponseHeaders().toLowerCase();
-      // assume the relay is php
-      return !!/php/.test(headers);
-    }
-    
-    
-    if(hasPhp()) {
-      CORSRelay = document.location.href;
-    }
-
-    // Get the canvas & its context, width, and height.
-    $('#canvas-overlay').on('mousedown', function(evt) {
-      var pos = (evt.pageX - $(this).offset().left) / $(this).width();
-      var currentPlayer = getCurrentPlayer();
-      var currentduration = currentPlayer.duration;
-      var newPosition = (currentduration*pos).toFixed(0);
-      //console.log('will seek', newPosition, currentduration, pos);
-      currentPlayer.setPosition(newPosition);
-    });
-    
-    $('.search-button').on('click', function() {
-      var user;
-      if(user = prompt('Load playlist from user : ')) {
-        resolveUser(user, onUserResolved)
-      }
-    });
-    
-    $('input[data-action="setvolume"]').on('change', function() {
-      playerSetVolume( $(this).val()*100 );
-    });
-
     // Initialize the SoundCloud Javascript SDK
-
     SC.initialize({
-      client_id: scClientID
+      client_id: OursoPhone.config.scClientID
     });
 
-    listenToHashChange();
-    
-    $('#controls .player-button').on('click', function(evt) {
-      evt.preventDefault();
-      interfaceLock();
-      var that = $(this);
-      switch(that.attr('data-action')) {
-        case 'play':
-          playerPlay();
-        break;
-        case 'pause':
-          playerPause();
-        break;
-        case 'backward':
-          playerPrev();
-        break;
-        case 'forward':
-          playerNext()
-        break;
-      }
-      return false;
-    });
-    
-    $('.volume-control label').on('click', function() {
-      var $volumeControl = $('[data-action="setvolume"]');
-      var currentVolume = 0- -$volumeControl.val();
-      var maxVolume     = 0- -$volumeControl.prop('max');
-      var minVolume     = 0- -$volumeControl.prop('min');
-      var step          = 0- -$volumeControl.prop('step');
-      var newVolume;
-      
-      //console.log(currentVolume, maxVolume, minVolume, step);
-      
-      switch( $(this).html() ) {
-        case '+':
-          if( ( currentVolume + step ) <= maxVolume ) {
-            newVolume = currentVolume + 0 + step;
-          }
-        break;
-        case '-':
-          if( ( currentVolume - step ) >= minVolume ) {
-            newVolume = currentVolume - step;
-          }
-        break;
-      }
-      if(newVolume!==undefined) {
-        //console.log('new volume', newVolume);
-        $volumeControl.val(newVolume).trigger('change');
-      }
-    });
+    // release the bear !
+    OursoPhone.init();
     
 }());
 

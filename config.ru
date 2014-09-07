@@ -1,10 +1,9 @@
 require "net/http"
 require "uri"
 
-# This is the root of our app
+# app root
 @root = File.expand_path(File.dirname(__FILE__))
 
-# use ActionDispatch::Head
 run Proc.new { |env|
   request = Rack::Request.new(env)
   path = Rack::Utils.unescape(env['PATH_INFO'])

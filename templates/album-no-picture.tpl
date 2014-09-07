@@ -1,0 +1,1 @@
+  <span class="album-nopicture"></span> 

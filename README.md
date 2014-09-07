@@ -1,11 +1,16 @@
 # OursoPhone Demo
 
 See it here: http://assassine.org/oursophone.php 
+
 Static Demo: http://assassine.org/oursophone.html (waveform disabled)
 
+
 This is a soundcloud player demo made for fun with the help of the SoundCloud/SoundManager2 API documentations.
+
 It'll automatically load the playlists from a given user, and let you browse/play the tracks by album or by tags.
+
 If fully setup, it'll try to animate the player using the waveform data that SoundCloud provides.
+
 The UI is template based (home made) and makes a strong use of advanced CSS3 features.
 
 ## Local Installation

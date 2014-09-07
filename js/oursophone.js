@@ -26,7 +26,7 @@
       },
       init: function() {
         
-        // templating for the lazy
+        // template populating for the lazy
         String.prototype.replaceArray = function(find, replace) {
           var replaceString = this;
           var regex; 
@@ -40,24 +40,44 @@
         var hasPhp = function() {
           var req = new XMLHttpRequest();
           // query self to get headers
-          req.open('HEAD', document.location, false);
+          req.open('HEAD', document.location.pathname, false);
           req.send(null);
           var headers = req.getAllResponseHeaders().toLowerCase();
           // assume the relay is php
           return !!/php/i.test(headers);
         }
         
+        var hasRuby = function() {
+          var req = new XMLHttpRequest();
+          // query self to get headers
+          req.open('GET', document.location.pathname, false);
+          req.send(null);
+          var headers = req.getAllResponseHeaders().toLowerCase();
+          console.log(headers);
+          // assume the relay is php
+          return !!/ruby/i.test(headers);
+        }
+        
+        
         if(hasPhp()) {
           // enable waveform animated plugin
           OursoPhone.config.CORSRelay = document.location.pathname;
+        } else {
+          if(hasRuby()) {
+            OursoPhone.config.CORSRelay = document.location.pathname;  
+          } else {
+            $('#canvas-overlay').css({color:'black'});
+          }
         }
         
         try {
+          // take a guess if templates are in the html body
           TemplateStore.init();
           window.onhashchange = OursoPhone.onRouteChanged;
           OursoPhone.onRouteChanged();
           OursoPhone.ui.init();          
         } catch(e) {
+          // templates are not in the body, load them from their folder
           OursoPhone.loadTemplates();
         }
 

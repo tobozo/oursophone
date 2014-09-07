@@ -1,0 +1,16 @@
+/tmp
+*.orig
+# dependencies
+/node_modules
+/vendor/*
+!/vendor/loader.js
+public/copyrighted-content
+/dist/*
+# misc
+/.sass-cache
+/connect.lock
+/libpeerconnection.log
+.DS_Store
+Thumbs.db
+/coverage/*
+config/environments/development.js 

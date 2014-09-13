@@ -770,7 +770,7 @@
           $(html).appendTo('#playlist');
         },
         drawTrack: function(track) {
-          var trackBox = $('trackbox[data-index="'+ track.id +'"]').clone();
+          var trackBox = $('#playlist trackbox[data-index="'+ track.id +'"]').clone();
           if(!trackBox.length) {
             console.log('should query api');
           }
@@ -783,7 +783,8 @@
             return;
           }
           $(trackBox).addClass('full-view').removeClass('active');
-          $('#track-description').empty().append( trackBox );
+          $('#track-description').html('').append( trackBox );
+          console.log('da');
           setTimeout(OursoPhone.on.tagInserted, 300);
         },
         drawComment: function(comments){

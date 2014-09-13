@@ -25,8 +25,10 @@
           Route.list.album(args);
         },
         album: function(args) { 
-          $('#playlist').attr('data-tag-id', 0);
-          SC.get('/playlists/' + args[1], OursoPhone.on.playlistLoaded);
+          if( args[1] != $('#playlist').attr('data-album-id') ) {
+            $('#playlist').attr('data-tag-id', 0);
+            SC.get('/playlists/' + args[1], OursoPhone.on.playlistLoaded);
+          }
         },
         tagdispatch:function(args) {
           // tag search

@@ -118,14 +118,18 @@
         pause: function() {
           var currentPlayer = OursoPhone.player.getCurrent()
           if(currentPlayer) {
-            currentPlayer.pause();
+            if(currentPlayer.paused===false) {
+              currentPlayer.pause();
+            }
           }
           OursoPhone.utils.interfaceRelease()
         },        
         play: function() {
           var currentPlayer = OursoPhone.player.getCurrent()
           if(currentPlayer) {
-            currentPlayer.play();
+            if(currentPlayer.paused===true) {
+              currentPlayer.play();
+            }
           }
           OursoPhone.utils.interfaceRelease();
         },        

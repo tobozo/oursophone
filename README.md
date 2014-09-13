@@ -35,3 +35,8 @@ There is also a config.ru Rack app included so that you can serve the project lo
 
 Warning : the Rack app will relay the waveform requests just as the PHP file would, but do NOT use it in production as it will forward ANY request.
 
+## Forking the project
+
+You will need to update the scClientID value with your own SoundCloud user ID, which you get by [registering a new soundcloud app](http://soundcloud.com/you/apps/new).
+
+You can change the scUserID value to a valid SoundCloud user ID and it'll automatically load the public playlists from that user.

@@ -5,7 +5,8 @@
         scClientID: "0ec3a92db08c758a47397bf8d588a250",
         scUserID: 61698493,
         CORSRelay: false,
-        autoplay: true
+        autoplay: true,
+        theme:'default'
       },
       currentPlayer: undefined,
       currentTrack: undefined,
@@ -66,7 +67,7 @@
           if(hasRuby()) {
             OursoPhone.config.CORSRelay = document.location.pathname;  
           } else {
-            $('#canvas-overlay').css({color:'black'});
+            $('#canvas-overlay').addClass('no-colors');
           }
         }
         
@@ -272,11 +273,7 @@
           setTimeout(OursoPhone.on.tagInserted, 300);
           
           $viewModeControl = TemplateStore.get('view-mode-control');
-          $($viewModeControl).css({
-            'top': '55px',
-            'right':'0',
-            'transform-origin': 'top right'
-          }).appendTo('#playlist');
+          $($viewModeControl).addClass('tag-list').appendTo('#playlist');
           
           $('.display-mode-box div').off().on('click', function() {
             var mode = this.className.split('-')[2];
@@ -793,12 +790,11 @@
           var text = "";
           var $comments = $('#comments');
           
-          userAvatar = $('<img/>').attr({
+          userAvatar = $('<img class="user-avatarimg" />').attr({
             'src': firstComment.user.avatar_url,
-            'align': 'left',
             'alt': firstComment.user.username,
             'title': firstComment.user.username
-          }).css({maxWidth:"1.2em"});
+          });
           
           userLink = $('<a></a>').attr({
             target:"_blank",

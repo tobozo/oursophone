@@ -1,22 +1,30 @@
 
     
     var OursoPhone = {
+      
       config: {
-        scClientID: "0ec3a92db08c758a47397bf8d588a250",
-        scUserID: 61698493,
-        CORSRelay: false,
-        autoplay: true,
-        theme:'default',
+        scClientID: "0ec3a92db08c758a47397bf8d588a250", /* STRING : a valid SoundCloud Client ID */
+        scUserID: 61698493, /* INT    : SoundClound user ID to fetch the playlists from */
+        CORSRelay: false,   /* Priv.  : changing this has no effect */
+        autoplay: true,     /* BOOL   : will automatically play the next song in the current album/taglist */
+        theme: 'default',   /* STRING : must be in /css folder and named oursophone.theme.[string].css */
         thumbs: {
-          rowsperalbum:3,
-          rowspertrack:5
+          autoresize: true, /* BOOL : enable dynamic thumbs resize on document load/resize */
+          rowsperalbum: 4,  /* INT  : amount of thumbnails per row for album thumbs */
+          rowspertrack: 5   /* INT  : amount of thumbnails per row for track thumbs */
         }
       },
-      currentPlayer: undefined,
-      currentTrack: undefined,
-      graphUpdater: undefined,
-      waveformData: undefined,
+      
+      currentPlayer: undefined, /* shortcut to the SoundManager instance */
+      
+      currentTrack: undefined, /* shortcut to the track playing */
+      
+      graphUpdater: undefined, /* animationFrame used to update the graph */
+      
+      waveformData: undefined, 
+      
       waveformWidth: undefined,
+      
       pixelTrans:"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
       templates: ['album-goback', 'album-item', 'album-no-picture', 'album-picture', 'track-item', 'track-no-picture', 'track-picture', 'user-item', 'view-mode-control'],
       
@@ -28,6 +36,7 @@
           OursoPhone.start();
         }
       },
+      
       init: function() {
         
         $(window).on('resize', OursoPhone.calcThumbsSize);
@@ -90,6 +99,7 @@
         });
 
       },
+      
       loadTheme: function(callback) {
         if( !/^[a-z0-9\_-]+$/i.test(OursoPhone.config.theme) ) {
           callback();
@@ -110,22 +120,43 @@
         });
         
       },
+      
       start: function() {
         TemplateStore.init();
         window.onhashchange = OursoPhone.onRouteChanged;
         OursoPhone.onRouteChanged();
         OursoPhone.ui.init();
       },
+      
       calcThumbsSize: function() {
         /* will autoresize thumbnails to fit the number of columns (see config) */
-        var wSize = $('#playlist').width();
-        var trackWidth = wSize / OursoPhone.config.thumbs.rowspertrack;
-        var albumWidth = wSize / OursoPhone.config.thumbs.rowsperalbum;
+        var wSize;
+        var trackWidth;
+        var albumWidth;
         var trackMargin = 0;
         var albumMargin = 0;
+        var scrollBarWidth = 0;
         var lastStylesheet = document.styleSheets[document.styleSheets.length-1];
         var lastRuleIndex;
         var rule;
+        var $scrollBarChecker;
+        
+        if(OursoPhone.config.thumbs.autoresize !== true) {
+          return;
+        }
+
+        $scrollBarChecker = $('<div class="scrollbar-checker"></div>');
+        $scrollBarChecker.appendTo('#playlist');
+        if( $scrollBarChecker.width()>0 && $('#playlist').width() != $scrollBarChecker.width() ) {
+          // scrollbar detected
+          wSize = $scrollBarChecker.width();
+        } else {
+          wSize = $('#playlist').width();          
+        }
+        $scrollBarChecker.remove();
+
+        trackWidth = wSize / OursoPhone.config.thumbs.rowspertrack;
+        albumWidth = wSize / OursoPhone.config.thumbs.rowsperalbum;
         
         // the whole thumb box is resized based on the child img's width
         // but outer containers may have margin/border
@@ -145,26 +176,32 @@
           rule = $.trim( lastStylesheet.cssRules[i].cssText.split('{')[0] );
           if( rule == '[data-display-mode="thumb"] .track img' 
            || rule == '[data-display-mode="thumb"] .track .track-picture' 
-           || rule == '[data-display-mode="thumb"] .album .album-picture' ) {
-            // deleteRule ?
+           || rule == '[data-display-mode="thumb"] .album .album-picture' 
+           || rule == '[data-display-mode="thumb"] .track .track-title' ) {
             lastStylesheet.deleteRule(i);
-            lastRuleIndex = i;
+            i--;
           }
         }
-        
         lastStylesheet.insertRule(
           '[data-display-mode="thumb"] .track img { width: ' + Math.floor( trackWidth - trackMargin ) + 'px }', 
-          ++lastRuleIndex
+          lastStylesheet.cssRules.length-1
         );
         lastStylesheet.insertRule(
           '[data-display-mode="thumb"] .track .track-picture { width: ' + Math.floor( trackWidth - trackMargin ) + 'px }', 
-          ++lastRuleIndex
+          lastStylesheet.cssRules.length-1
         );
         lastStylesheet.insertRule(
           '[data-display-mode="thumb"] .album .album-picture { width: ' + Math.floor( albumWidth - albumMargin ) + 'px }', 
-          ++lastRuleIndex
-        );        
+          lastStylesheet.cssRules.length-1
+        );
+        lastStylesheet.insertRule(
+          '[data-display-mode="thumb"] .track .track-title { font-size: ' + ( trackWidth/100 ).toFixed(2) + 'em }',
+          lastStylesheet.cssRules.length-1
+        );                        
+        
+        
       },
+      
       onRouteChanged: function() {
         var args = location.hash.replace('#', '').split(':');
         
@@ -178,6 +215,7 @@
         }
         Route.default(args);
       },
+      
       utils: {
         htmlEncode: function(string){
           string = (string === null)?"":string.toString();
@@ -197,7 +235,9 @@
           $('body').removeClass('locked');
         }
       },
+      
       player: {
+        
         pause: function() {
           var currentPlayer = OursoPhone.player.getCurrent()
           if(currentPlayer) {
@@ -206,7 +246,8 @@
             }
           }
           OursoPhone.utils.interfaceRelease()
-        },        
+        },
+        
         play: function() {
           var currentPlayer = OursoPhone.player.getCurrent()
           if(currentPlayer) {
@@ -215,7 +256,8 @@
             }
           }
           OursoPhone.utils.interfaceRelease();
-        },        
+        },
+        
         next: function() {
           var tracks = $('#playlist .track trackbox'),
           currentTrack = $('#playlist').attr('data-song-id'),
@@ -259,6 +301,7 @@
             OursoPhone.utils.interfaceRelease();
           }
         },
+        
         prev: function() {
           var tracks = $('#playlist .track trackbox'),
           currentTrack = $('#playlist').attr('data-song-id'),
@@ -302,9 +345,11 @@
             OursoPhone.utils.interfaceRelease();
           }
         },
+        
         applyVolume: function() {
           $('input[data-action="setvolume"]').trigger('change');
         },
+        
         setVolume: function(newVolume) {
           var currentPlayer = OursoPhone.player.getCurrent();
           if(currentPlayer===undefined) {
@@ -313,15 +358,19 @@
             currentPlayer.setVolume( newVolume );
           }
         },
+        
         getCurrent: function() {
           return OursoPhone.currentPlayer;
         },
+        
         getWaveFormData: function() {
           return OursoPhone.waveformData;
         },
+        
         setWaveformData: function(waveformData) {
           OursoPhone.waveformData = waveformData;
         },
+        
         songProgress: function() {
           var currentPlayer = OursoPhone.player.getCurrent();
           if(currentPlayer===undefined) return;
@@ -345,7 +394,9 @@
           });
         }
       },
+      
       on: {
+        
         tagListLoaded: function(tracks) {
           var $playlist = $("#playlist"), $viewModeControl;
           $playlist.hide();
@@ -381,6 +432,7 @@
           OursoPhone.utils.interfaceRelease();
           OursoPhone.calcThumbsSize();
         },
+        
         playlistLoaded:  function(playlist) {
           var $playlist = $("#playlist"), $currentSound, $viewModeControl;
           $playlist.hide();
@@ -436,6 +488,7 @@
           OursoPhone.utils.interfaceRelease();
           OursoPhone.calcThumbsSize()
         },
+        
         playlistsGet: function(playlists) {
           var $playlist = $("#playlist");
           $playlist.hide();
@@ -453,6 +506,7 @@
           $playlist.show();
           OursoPhone.calcThumbsSize()
         },
+        
         dataWaveformReady: function() {
           var currentPlayer = OursoPhone.player.getCurrent();
           var waveformData  = OursoPhone.player.getWaveFormData();
@@ -481,6 +535,7 @@
           
           requestAnimationFrame(OursoPhone.on.dataWaveformReady);
         },
+        
         streamReady: function(player, error) {
           
           OursoPhone.currentPlayer = player;
@@ -493,7 +548,8 @@
           OursoPhone.player.applyVolume();
           OursoPhone.graphUpdater = setInterval( OursoPhone.player.songProgress, 500 );
           OursoPhone.utils.interfaceRelease();
-        },        
+        },
+        
         streamFinished: function() {
           if( OursoPhone.graphUpdater!== undefined ) {
             clearInterval( OursoPhone.graphUpdater );
@@ -511,6 +567,7 @@
             // song ended
           }
         },
+        
         trackInfo: function(track, error) {
           var url, urlImg, urlData,
           currentPlayer = OursoPhone.player.getCurrent(),
@@ -621,12 +678,14 @@
             })
           }
         },
+        
         userResolved: function(user) {
           if(user.id) {
             OursoPhone.config.scUSerID = user.id;
             location.href = '#';
           }
         },
+        
         tagInserted: function() {
           $('tag').off().on('click', function() {
             // console.log($(this).text());
@@ -639,7 +698,9 @@
           });
         }
       },
+      
       ui: {
+        
         init: function() {
           // Get the canvas & its context, width, and height.
           $('#canvas-overlay').on('mousedown', function(evt) {
@@ -713,6 +774,7 @@
             OursoPhone.calcThumbsSize();
           }, 500);
         },
+        
         drawAlbum: function(album) {
           var $albumpicture, 
           $albumtpl = TemplateStore.get('album-item'),
@@ -777,6 +839,7 @@
           $(html).appendTo('#playlist');
           setTimeout(OursoPhone.on.tagInserted, 300);
         },
+        
         drawTracks: function(track, index, thisArg) {
           // thisArg => all tracks
           var attributes = '';
@@ -854,6 +917,7 @@
           ]);
           $(html).appendTo('#playlist');
         },
+        
         drawTrack: function(track) {
           var trackBox = $('#playlist trackbox[data-index="'+ track.id +'"]').clone();
           if(!trackBox.length) {
@@ -872,6 +936,7 @@
 
           setTimeout(OursoPhone.on.tagInserted, 300);
         },
+        
         drawComment: function(comments){
           var firstComment = comments[0];
           var userComment, blockComment, userAvatar, userLink;
@@ -899,6 +964,7 @@
           }
           $comments.stop(true, true).animate({scrollTop: $comments.prop("scrollHeight")}, 300);
         },
+        
         resolveUser: function(searchStr, callback) {
           searchStr = searchStr.replace(/ /g, '-');
           console.log('will resolve', searchStr);
@@ -916,6 +982,7 @@
             }
           });
         },
+        
         drawUser: function(user, error) {
           var $usertpl = TemplateStore.get('user-item');
           var html = '';

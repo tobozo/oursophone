@@ -61,6 +61,7 @@ header, #playlist {
 }
 .track {
   margin: 5px;
+  font-size: 12px;
 }
 
 [data-album-id] .album {
@@ -180,11 +181,17 @@ header, #playlist {
   -webkit-transition:all 0.3s ease;
   transition:all 0.3s ease;
 }
+
+[data-display-mode="thumb"] .track-titlespan {
+  margin: 0.3em;
+  line-height:1.2em;
+}
+
 .track-titlespan {
   display: inline-block;
   text-align: center;
   line-height: 15px;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 
@@ -224,12 +231,13 @@ header, #playlist {
 .album-titlespan, .album-descspan {
   display: inline-block;
   text-align: center;
-  line-height: 15px;
-  vertical-align: middle;
+  vertical-align: top;
   -webkit-transform: translate(0, 0%);
   -ms-transform: translate(0, 0%);
   transform: translate(0, 0%);
   font-size:1em;
+  margin:0.3em;
+  line-height: 1.2em;
 }
 
 

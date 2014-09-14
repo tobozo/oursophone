@@ -81,11 +81,10 @@
 /** Playlist customizations (desktop only as they rely on mouseover effects) **/
 
 #playlist {
-  background-color: #555;
-  opacity: 0.75;
+  background-color: #333;
 }
 
 #playlist:hover {
-  opacity: 1;
+  background-color: #444;
 }
 

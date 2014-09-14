@@ -6,7 +6,11 @@
         scUserID: 61698493,
         CORSRelay: false,
         autoplay: true,
-        theme:'default'
+        theme:'default',
+        thumbs: {
+          rowsperalbum:3,
+          rowspertrack:5
+        }
       },
       currentPlayer: undefined,
       currentTrack: undefined,
@@ -25,6 +29,9 @@
         }
       },
       init: function() {
+        
+        $(window).on('resize', OursoPhone.calcThumbsSize);
+        
         
         // template populating for the lazy
         String.prototype.replaceArray = function(find, replace) {
@@ -108,6 +115,55 @@
         window.onhashchange = OursoPhone.onRouteChanged;
         OursoPhone.onRouteChanged();
         OursoPhone.ui.init();
+      },
+      calcThumbsSize: function() {
+        /* will autoresize thumbnails to fit the number of columns (see config) */
+        var wSize = $('#playlist').width();
+        var trackWidth = wSize / OursoPhone.config.thumbs.rowspertrack;
+        var albumWidth = wSize / OursoPhone.config.thumbs.rowsperalbum;
+        var trackMargin = 0;
+        var albumMargin = 0;
+        var lastStylesheet = document.styleSheets[document.styleSheets.length-1];
+        var lastRuleIndex;
+        var rule;
+        
+        // the whole thumb box is resized based on the child img's width
+        // but outer containers may have margin/border
+        // TODO : find a better way to calculate the width delta
+        try {
+          trackMargin = ($('#playlist .track').css('marginLeft').split('px')[0]- -$('#playlist .track').css('marginRight').split('px')[0])
+            - -( $('#playlist .track').outerWidth() - $('#playlist .track img').width() )
+          ;
+        } catch(e) { ; }
+        try {
+          albumMargin = ($('#playlist .album').css('marginLeft').split('px')[0]- -$('#playlist .album').css('marginRight').split('px')[0])
+            - -( $('#playlist .album').outerWidth() - $('#playlist .album img').width() )
+          ;
+        } catch(e) { ; }
+        
+        for(var i=0; i<lastStylesheet.cssRules.length; i++) { 
+          rule = $.trim( lastStylesheet.cssRules[i].cssText.split('{')[0] );
+          if( rule == '[data-display-mode="thumb"] .track img' 
+           || rule == '[data-display-mode="thumb"] .track .track-picture' 
+           || rule == '[data-display-mode="thumb"] .album .album-picture' ) {
+            // deleteRule ?
+            lastStylesheet.deleteRule(i);
+            lastRuleIndex = i;
+          }
+        }
+        
+        lastStylesheet.insertRule(
+          '[data-display-mode="thumb"] .track img { width: ' + Math.floor( trackWidth - trackMargin ) + 'px }', 
+          ++lastRuleIndex
+        );
+        lastStylesheet.insertRule(
+          '[data-display-mode="thumb"] .track .track-picture { width: ' + Math.floor( trackWidth - trackMargin ) + 'px }', 
+          ++lastRuleIndex
+        );
+        lastStylesheet.insertRule(
+          '[data-display-mode="thumb"] .album .album-picture { width: ' + Math.floor( albumWidth - albumMargin ) + 'px }', 
+          ++lastRuleIndex
+        );        
       },
       onRouteChanged: function() {
         var args = location.hash.replace('#', '').split(':');
@@ -323,6 +379,7 @@
           
           $playlist.show();
           OursoPhone.utils.interfaceRelease();
+          OursoPhone.calcThumbsSize();
         },
         playlistLoaded:  function(playlist) {
           var $playlist = $("#playlist"), $currentSound, $viewModeControl;
@@ -377,6 +434,7 @@
             // 
           }
           OursoPhone.utils.interfaceRelease();
+          OursoPhone.calcThumbsSize()
         },
         playlistsGet: function(playlists) {
           var $playlist = $("#playlist");
@@ -393,6 +451,7 @@
             return false;
           });
           $playlist.show();
+          OursoPhone.calcThumbsSize()
         },
         dataWaveformReady: function() {
           var currentPlayer = OursoPhone.player.getCurrent();
@@ -649,7 +708,10 @@
               //console.log('new volume', newVolume);
               $volumeControl.val(newVolume).trigger('change');
             }
-          });        
+          });
+          setTimeout(function() {
+            OursoPhone.calcThumbsSize();
+          }, 500);
         },
         drawAlbum: function(album) {
           var $albumpicture, 

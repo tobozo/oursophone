@@ -14,9 +14,9 @@
       </div>
       <div class="search-button" title="Marre de GarD?">🔍</div>
       <div class="volume-control">
-        <label>-</label>
+        <label class="minus-button" data-volume-action="-">-</label>
         <input type="range" data-action="setvolume" min="0" max="1" step="0.1" />
-        <label>+</label>
+        <label class="plus-button" data-volume-action="+">+</label>
       </div>
       <div id="player-state"></div>
     </div>

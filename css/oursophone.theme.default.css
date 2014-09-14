@@ -45,10 +45,18 @@
   top: 50%;
   transform: rotate(-90deg) scale(0.4);
   transform-origin: left bottom;
+  z-index: 100000;
 }
 
 .volume-control label {
-  transform: rotate(-90deg);
+  transform: rotate(-90deg) scale(2);
+  /*width:1em;
+  height:1em;
+  line-height:1em;*/
+}
+
+.volume-control input {
+  transform: scale(1, 2);
 }
 
 #player-state {

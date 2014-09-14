@@ -151,6 +151,7 @@
         if( $scrollBarChecker.width()>0 && $('#playlist').width() != $scrollBarChecker.width() ) {
           // scrollbar detected
           wSize = $scrollBarChecker.width();
+          console.log('scrollbar detected');
         } else {
           wSize = $('#playlist').width();          
         }
@@ -405,7 +406,7 @@
         
         tagListLoaded: function(tracks) {
           var $playlist = $("#playlist"), $viewModeControl;
-          $playlist.hide();
+          $playlist.fadeOut(150);
           $playlist.html('').attr('data-album-id', 0).attr('data-display-mode', 'list');
           
           tracks.forEach( OursoPhone.ui.drawTracks );
@@ -434,14 +435,14 @@
             return false;
           });
           
-          $playlist.show();
+          $playlist.fadeIn(150);
           OursoPhone.utils.interfaceRelease();
           OursoPhone.calcThumbsSize();
         },
         
         playlistLoaded:  function(playlist) {
           var $playlist = $("#playlist"), $currentSound, $viewModeControl;
-          $playlist.hide();
+          $playlist.fadeOut(150);
           $playlist.html('').attr('data-album-id', playlist.id);
           
           [playlist].forEach( OursoPhone.ui.drawAlbum );
@@ -475,7 +476,7 @@
           
           $('trackbox').removeClass('active');
           
-          $playlist.show();
+          $playlist.fadeIn(150);
           
           if( $('#user-description .user-id').text() != playlist.user.id ) {
             SC.get('/users/'+playlist.user.id, OursoPhone.ui.drawUser); 
@@ -497,7 +498,7 @@
         
         playlistsGet: function(playlists) {
           var $playlist = $("#playlist");
-          $playlist.hide();
+          $playlist.fadeOut(150);
           $playlist.html('').attr('data-album-id', null).attr('data-song-id', null);
           playlists.forEach( OursoPhone.ui.drawAlbum );
           $('albumbox').on('click', function() {
@@ -509,7 +510,7 @@
             }
             return false;
           });
-          $playlist.show();
+          $playlist.fadeIn(150);
           OursoPhone.calcThumbsSize()
         },
         
@@ -759,7 +760,7 @@
             
             //console.log(currentVolume, maxVolume, minVolume, step);
             
-            switch( $(this).html() ) {
+            switch( $(this).attr('data-volume-action') ) {
               case '+':
                 if( ( currentVolume + step ) <= maxVolume ) {
                   newVolume = currentVolume + 0 + step;

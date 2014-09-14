@@ -93,7 +93,6 @@ if(isset($_GET['w'])) {
 <title>assassine.org</title>
 <link rel="stylesheet" type="text/css" href="/css/oursophone.css"></link>
 <script type="text/javascript" src="./jquery.min.js"></script>
-<!-- script type="text/javascript" src="https://w.soundcloud.com/player/api.js"></script -->
 <script type="text/javascript" src="http://connect.soundcloud.com/sdk.js"></script>
 </head>
 <body>

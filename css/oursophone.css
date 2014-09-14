@@ -563,24 +563,23 @@ margin-top:120px;
   overflow:auto;
 }
 #playlist[data-album-id] .album .album-title .album-descspan {
-font-size: 12px;
-font-weight: normal;
-line-height: 1.2em;
-margin: 1em;
-padding: 0.3em;
-text-align: left;
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.2em;
+  margin: 1em;
+  padding: 0.3em;
+  text-align: left;
 }
 
 #playlist[data-album-id] .album albumbox {
-cursor:default;
+  cursor:default;
 }
 
 #playlist[data-album-id] .album albumbox div span {
-display:block;
-line-height:1.2em;
-cursor:default;
-opacity:1;
-
+  display:block;
+  line-height:1.2em;
+  cursor:default;
+  opacity:1;
 }
 
 
@@ -610,18 +609,18 @@ trackbox, albumbox {
 
 
 #comments {
-display: block;
-max-height: 4em;
-overflow-y: hidden;
-position: relative;
-width: 100%;
-text-align: left;
+  display: block;
+  max-height: 4em;
+  overflow-y: auto;
+  position: relative;
+  width: 100%;
+  text-align: left;
 }
 
 #comments li:after {
-clear: both;
-content: " ";
-display: block;
+  clear: both;
+  content: " ";
+  display: block;
 }
 
 

@@ -218,23 +218,28 @@
       },
       
       utils: {
+        
         htmlEncode: function(string){
           string = (string === null)?"":string.toString();
           string = $('<div/>').text(string).html();
           return string.replace(/\n/gi, '<br />\n');
           //
         },
+        
         attrEncode: function(string) {
           string = (string === null)?"":string.toString();
           string = string.replace(/"/gi, '&quot;');
           return string.replace(/\n/gi, '<br />\n');
         },
+        
         interfaceLock: function() {
           $('body').addClass('locked');
         },
+        
         interfaceRelease: function() {
           $('body').removeClass('locked');
         }
+        
       },
       
       player: {
@@ -956,6 +961,11 @@
           });
           
           userAvatar.appendTo(userLink);
+          console.log(firstComment.user);
+          userLink.on('click', function() {
+            OursoPhone.ui.resolveUser(firstComment.user.id, OursoPhone.on.userResolved)
+            return false;
+          });
           
           userComment = $('<span class="comment-text"></span>').text('(@' +Math.floor(firstComment.timestamp / 1000) + "s): "+ firstComment.body);
           blockComment = $('<li/>').append(userLink).append(userComment).attr('data-id', firstComment.id);
@@ -967,11 +977,7 @@
         },
         
         resolveUser: function(searchStr, callback) {
-          searchStr = searchStr.replace(/ /g, '-');
-          console.log('will resolve', searchStr);
-          SC.get('/resolve', {
-            url: 'https://soundcloud.com/' + searchStr
-          }, function(user, error) {
+          var handleResolvedUser = function(user, error) {
             if(error) {
               console.log('HTTP Error', error);
             } else {
@@ -981,7 +987,26 @@
                 console.log('nothing found');
               }
             }
-          });
+          }
+          
+          if(/^[0-9]+$/g.test(searchStr)) {
+            // user ID
+            SC.get('/users/' + searchStr + '/tracks', function(tracks) {
+              if(tracks.length>0) {
+                $('#playlist').attr('data-tag-id', null);
+                OursoPhone.on.tagListLoaded(tracks);
+              }
+            });
+          } else {
+            // user Name
+            searchStr = searchStr.replace(/ /g, '-');
+            SC.get('/resolve', {
+              url: 'https://soundcloud.com/' + searchStr
+            }, handleResolvedUser);
+            
+          }
+          console.log('will resolve', searchStr);
+
         },
         
         drawUser: function(user, error) {

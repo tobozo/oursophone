@@ -43,20 +43,28 @@
   padding: 0;
   position: absolute;
   top: 50%;
-  transform: rotate(-90deg) scale(0.4);
-  transform-origin: left bottom;
+  -webkit-transform: rotate(-90deg) scale(0.4);
+      -ms-transform: rotate(-90deg) scale(0.4);
+          transform: rotate(-90deg) scale(0.4);
+  -webkit-transform-origin: left bottom;
+      -ms-transform-origin: left bottom;
+          transform-origin: left bottom;
   z-index: 100000;
 }
 
 .volume-control label {
-  transform: rotate(-90deg) scale(2);
+  -webkit-transform: rotate(-90deg) scale(2);
+      -ms-transform: rotate(-90deg) scale(2);
+          transform: rotate(-90deg) scale(2);
   /*width:1em;
   height:1em;
   line-height:1em;*/
 }
 
 .volume-control input {
-  transform: scale(1, 2);
+  -webkit-transform: scale(1, 2);
+      -ms-transform: scale(1, 2);
+          transform: scale(1, 2);
 }
 
 #player-state {

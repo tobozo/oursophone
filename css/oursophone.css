@@ -63,13 +63,14 @@ header, #playlist {
 
 [data-display-mode="list"] .track {
   display:block;
-  height:28px;
   margin:0;
 }
-[data-display-mode="list"] .track-picture, [data-display-mode="list"] .track-nopicture {
+[data-display-mode="list"] .track .track-picture, 
+[data-display-mode="list"] .track .track-nopicture,  
+[data-display-mode="list"] .track img {
   display: block;
-  width: 25px;
-  height: 25px;
+  width: auto;
+  height: 100%;
   border:1px solid white;
   margin:1px;
   position:absolute;
@@ -77,7 +78,6 @@ header, #playlist {
   transition: all 0.3s linear;
 }
 [data-display-mode="list"] .track-title {
-  padding-left:31px;
   margin:0;
 }
 /*
@@ -90,10 +90,10 @@ header, #playlist {
   color: white;
   display: block;
   font-size: 12px;
-  height: 28px;
-  line-height: 28px;
+  line-height: 2.1em;
   text-align: left;
   padding-right: 5em;
+  padding-left: 3em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -123,21 +123,35 @@ header, #playlist {
   vertical-align: middle;
 }
 
+[data-display-mode="thumb"] .track .track-picture, 
+/*[data-display-mode="thumb"] .track .track-nopicture,  */
+[data-display-mode="thumb"] .track img {
+  height:100%;
+  /*
+   * THEME
+   * the width of this selector
+   * determines the size of the image thumbnail (keep square)
+   */
+  width:100px;
+  display: inline-block;
+  float: left;
+  border: 5px solid;
+}
+
 [data-display-mode="thumb"] .track-picture {
   display: block;
-  width: 100px;
-  height: 100px;
   border:5px solid white;
   -webkit-transition: all 0.3s linear;
   transition: all 0.3s linear;
 }
+/*
 [data-display-mode="thumb"] .track-nopicture {
   display: block;
-  width: 100px;
-  height: 100px;
   background-color: #000000;
-  border: 5px dashed rgba(0, 128, 0, 0.5)
-}
+  border: 5px dashed rgba(0, 128, 0, 0.5);
+  -webkit-transition: all 0.3s linear;
+  transition: all 0.3s linear;
+}*/
 
 [data-display-mode="thumb"] .track-title {
   position: absolute;
@@ -145,8 +159,8 @@ header, #playlist {
   left: 0;
   background-color: rgba(255, 255, 255, 1);
   text-shadow:0 0 0 #fff;
-  width: 110px;
-  height: 110px;
+  width: 100%;
+  height: 100%;
   padding: 0;
   margin: 0;
   overflow: hidden;

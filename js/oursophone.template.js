@@ -3,7 +3,7 @@
         folder: '/templates/',
         extension: 'tpl'
       },
-      init: function() {
+      init: function(callback) {
         var templates = document.querySelectorAll('script[type="text/html"]');
         
         if(templates.length === 0) {
@@ -16,10 +16,11 @@
             TemplateStore.get(templates[tpl].id);
           }
         }
+        if(callback) callback();
       },
       get: function(id) {
         var $tpl;
-        //id = id.replace('#', '');
+
         if(TemplateStore.store[id]!==undefined) {
           return TemplateStore.store[id];
         }

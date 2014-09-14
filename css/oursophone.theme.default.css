@@ -1,0 +1,54 @@
+
+/** Tracks Thumbnails **/
+
+[data-display-mode="list"] .track-titlespan {
+  color: white;
+  /*
+   * The font size of this selector
+   * determines the height of the line,
+   * and height+width of the thumb image
+   */ 
+  font-size: 12px;
+}
+
+[data-display-mode="thumb"] .track-picture, [data-display-mode="thumb"] .track-nopicture {
+  /*
+   * the width of this selector
+   * determines the width *and* height 
+   * of the image thumbnail block
+   */
+  width:100px;
+}
+
+[data-display-mode="thumb"] .track-picture {
+  /* background-color: currentColor; */
+  /* border:5px solid; */
+}
+
+[data-display-mode="thumb"] .track-title {
+  /* background-color: rgba(255, 255, 255, 1); */
+  /* text-shadow:0 0 0 #fff; */
+  /* font-size: .9em; */
+  /* line-height: 10px; */
+  /* color: #000000; */
+  /* line-height: 100px; */
+}
+
+
+
+
+/** Vertical volume control **/
+.volume-control {
+  margin: 1em;
+  position: absolute;
+  top: -12px;
+  transform: rotate(90deg) scale(0.4);
+  transform-origin: left top 0;
+  padding:0;
+}
+
+
+
+.volume-control label {
+  transform: rotate(-90deg);
+}

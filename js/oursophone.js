@@ -13,16 +13,15 @@
       graphUpdater: undefined,
       waveformData: undefined,
       waveformWidth: undefined,
+      pixelTrans:"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
       templates: ['album-goback', 'album-item', 'album-no-picture', 'album-picture', 'track-item', 'track-no-picture', 'track-picture', 'user-item', 'view-mode-control'],
+      
       loadTemplates: function() {
         var template = OursoPhone.templates.shift();
         if(template!==undefined) {
           TemplateStore.load(template, OursoPhone.loadTemplates);
         } else {
-          window.onhashchange = OursoPhone.onRouteChanged;
-          TemplateStore.init();
-          OursoPhone.onRouteChanged();
-          OursoPhone.ui.init();
+          OursoPhone.start();
         }
       },
       init: function() {
@@ -71,17 +70,43 @@
           }
         }
         
-        try {
-          // take a guess if templates are in the html body
-          TemplateStore.init();
-          window.onhashchange = OursoPhone.onRouteChanged;
-          OursoPhone.onRouteChanged();
-          OursoPhone.ui.init();          
-        } catch(e) {
-          // templates are not in the body, load them from their folder
-          OursoPhone.loadTemplates();
+        OursoPhone.loadTheme(function() {
+          
+          try {
+            // take a guess if templates are in the html body
+            OursoPhone.start();
+          } catch(e) {
+            // templates are not in the body, load them from their folder
+            OursoPhone.loadTemplates();
+          }
+          
+        });
+
+      },
+      loadTheme: function(callback) {
+        if( !/^[a-z0-9\_-]+$/i.test(OursoPhone.config.theme) ) {
+          callback();
+          return;
         }
 
+        $.ajax({
+          url: 'css/oursophone.theme.' + OursoPhone.config.theme + '.css',
+          dataType: 'text',
+          success: function(css) {
+            $('<style type="text/css">\n' + css + '</style>').appendTo("head");
+            callback();
+          },
+          error: function() {
+            callback();
+          }
+        });
+        
+      },
+      start: function() {
+        TemplateStore.init();
+        window.onhashchange = OursoPhone.onRouteChanged;
+        OursoPhone.onRouteChanged();
+        OursoPhone.ui.init();
       },
       onRouteChanged: function() {
         var args = location.hash.replace('#', '').split(':');
@@ -508,7 +533,7 @@
           
           $img.on('error', function() {
             // transparent pixel
-            $img.attr('src', "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+            $img.attr('src', OursoPhone.pixelTrans);
           });
           
           $img.on('load', function() {
@@ -729,7 +754,7 @@
               [track.artwork_url, OursoPhone.utils.htmlEncode(track.title)]
             );
           } else {
-            $trackpicture = TemplateStore.get('track-no-picture');
+            $trackpicture = '<img src="'+OursoPhone.pixelTrans +'" />';//TemplateStore.get('track-no-picture');
           }
           if(track.tag_list=='') {
             trackTagList = '';
@@ -781,7 +806,7 @@
           }
           $(trackBox).addClass('full-view').removeClass('active');
           $('#track-description').html('').append( trackBox );
-          console.log('da');
+
           setTimeout(OursoPhone.on.tagInserted, 300);
         },
         drawComment: function(comments){

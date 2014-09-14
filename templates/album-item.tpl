@@ -12,5 +12,6 @@
         <span class="album-createdat">{album-createdat}</span>
         <span class="album-taglist">{album-taglist}</span>
       </div>
+      <div style="clear:both"></div>
     </albumbox>
   </div>

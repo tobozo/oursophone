@@ -97,6 +97,7 @@
             callback();
           },
           error: function() {
+            console.warn('invalid theme in OursoPhone.config.theme: ', OursoPhone.config.theme);
             callback();
           }
         });

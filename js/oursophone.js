@@ -26,7 +26,7 @@
       waveformWidth: undefined,
       
       pixelTrans:"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-      templates: ['album-goback', 'album-item', 'album-no-picture', 'album-picture', 'track-item', 'track-no-picture', 'track-picture', 'user-item', 'view-mode-control'],
+      templates: ['index', 'album-goback', 'album-item', 'album-no-picture', 'album-picture', 'track-item', 'track-no-picture', 'track-picture', 'user-item', 'view-mode-control'],
       
       loadTemplates: function() {
         var template = OursoPhone.templates.shift();
@@ -123,6 +123,7 @@
       
       start: function() {
         TemplateStore.init();
+        $( TemplateStore.get('index') ).appendTo('body');
         window.onhashchange = OursoPhone.onRouteChanged;
         OursoPhone.onRouteChanged();
         OursoPhone.ui.init();

@@ -146,12 +146,12 @@
           return;
         }
 
-        $scrollBarChecker = $('<div class="scrollbar-checker"></div>');
+        $scrollBarChecker = $('<div id="scrollbar-checker"></div>');
         $scrollBarChecker.appendTo('#playlist');
         if( $scrollBarChecker.width()>0 && $('#playlist').width() != $scrollBarChecker.width() ) {
           // scrollbar detected
           wSize = $scrollBarChecker.width();
-          console.log('scrollbar detected');
+          console.log('scrollbar detected', $('#playlist').width() , $scrollBarChecker.width());
         } else {
           wSize = $('#playlist').width();          
         }

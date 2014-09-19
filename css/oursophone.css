@@ -55,6 +55,14 @@ header, #playlist {
   min-width: 300px;
 }
 
+#scrollbar-checker {
+  margin:0;
+  padding:0;
+  border:0;
+  display:block;
+  position:relative;
+}
+
 .track, .album {
   display: inline-block;
   position: relative;

@@ -91,9 +91,10 @@ if(isset($_GET['w'])) {
 <head>
 <meta charset="UTF-8">
 <title>assassine.org</title>
-<link rel="stylesheet" type="text/css" href="/css/oursophone.css"></link>
-<script type="text/javascript" src="./jquery.min.js"></script>
-<script type="text/javascript" src="http://connect.soundcloud.com/sdk.js"></script>
+<link rel="stylesheet" type="text/css" href="css/oursophone.css"></link>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="js/vendor/jquery-1.11.1.min.js"><\/script>')</script>
+<script type="text/javascript" src="//connect.soundcloud.com/sdk.js"></script>
 </head>
 <body>
 <?
@@ -108,9 +109,9 @@ foreach($templates as $template) {
   echo '</script>'."\n";
 }
 ?>
-<script type="text/javascript" src="/js/oursophone.js"></script>
-<script type="text/javascript" src="/js/oursophone.route.js"></script>
-<script type="text/javascript" src="/js/oursophone.template.js"></script>
+<script type="text/javascript" src="js/oursophone.js"></script>
+<script type="text/javascript" src="js/oursophone.route.js"></script>
+<script type="text/javascript" src="js/oursophone.template.js"></script>
 <script type="text/javascript">
 
 (function(){

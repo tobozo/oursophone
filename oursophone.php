@@ -92,7 +92,8 @@ if(isset($_GET['w'])) {
 <meta charset="UTF-8">
 <title>assassine.org</title>
 <link rel="stylesheet" type="text/css" href="css/oursophone.css"></link>
-<script type="text/javascript" src="./jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="js/vendor/jquery-1.11.1.min.js"><\/script>')</script>
 <script type="text/javascript" src="//connect.soundcloud.com/sdk.js"></script>
 </head>
 <body>

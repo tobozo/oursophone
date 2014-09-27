@@ -135,7 +135,7 @@ header, #playlist {
   text-decoration: none;
   margin: 0;
   padding: 0;
-  line-height: 100px;
+  /*line-height: 100px;*/
   vertical-align: middle;
 }
 
@@ -184,7 +184,7 @@ header, #playlist {
   line-height: 10px;
   color: #000000;
   opacity:0.5;
-  line-height: 100px;
+  /*line-height: 100px;*/
   vertical-align: top;
   -webkit-transition:all 0.3s ease;
   transition:all 0.3s ease;

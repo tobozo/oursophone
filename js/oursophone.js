@@ -4,7 +4,7 @@
       
       config: {
         scClientID: "0ec3a92db08c758a47397bf8d588a250", /* STRING : a valid SoundCloud Client ID */
-        scUserID: 61698493, /* INT    : SoundClound user ID to fetch the playlists from */
+        scUserID: /*305413, //*/61698493, /* INT    : SoundClound user ID to fetch the playlists from */
         CORSRelay: false,   /* Priv.  : changing this has no effect */
         autoplay: true,     /* BOOL   : will automatically play the next song in the current album/taglist */
         theme: 'default',   /* STRING : must be in /css folder and named oursophone.theme.[string].css */
@@ -37,7 +37,9 @@
         }
       },
       
-      init: function() {
+      init: function(options) {
+        
+        
         
         $(window).on('resize', OursoPhone.calcThumbsSize);
         
@@ -106,11 +108,13 @@
           return;
         }
 
+        $('style[id^="oursophone-theme"]').remove();
+        
         $.ajax({
           url: 'css/oursophone.theme.' + OursoPhone.config.theme + '.css',
           dataType: 'text',
           success: function(css) {
-            $('<style type="text/css">\n' + css + '</style>').appendTo("head");
+            $('<style type="text/css" id="oursophone-theme-'+ OursoPhone.config.theme +'">\n' + css + '</style>').appendTo("head");
             callback();
           },
           error: function() {
@@ -178,6 +182,7 @@
           rule = $.trim( lastStylesheet.cssRules[i].cssText.split('{')[0] );
           if( rule == '[data-display-mode="thumb"] .track img' 
            || rule == '[data-display-mode="thumb"] .track .track-picture' 
+           || rule == '[data-display-mode="thumb"] .album img'
            || rule == '[data-display-mode="thumb"] .album .album-picture' 
            || rule == '[data-display-mode="thumb"] .track .track-title' ) {
             lastStylesheet.deleteRule(i);
@@ -194,6 +199,10 @@
         );
         lastStylesheet.insertRule(
           '[data-display-mode="thumb"] .album .album-picture { width: ' + Math.floor( albumWidth - albumMargin ) + 'px }', 
+          lastStylesheet.cssRules.length-1
+        );
+        lastStylesheet.insertRule(
+          '[data-display-mode="thumb"] .album img { width: ' + Math.floor( albumWidth - albumMargin ) + 'px }', 
           lastStylesheet.cssRules.length-1
         );
         lastStylesheet.insertRule(
@@ -807,7 +816,8 @@
               [album.artwork_url]
             );
           } else {
-            $albumpicture = TemplateStore.get('album-no-picture');
+            //$albumpicture = TemplateStore.get('album-no-picture');
+            $albumpicture = '<img src="'+OursoPhone.pixelTrans +'" />';//TemplateStore.get('track-no-picture');
           }
           if(album.tag_list=='') {
             albumTagList = '';
@@ -832,15 +842,15 @@
           album.kind,
           album.created_at,
           new Date(album.duration).getMinutes() + 'mn' + ( new Date(album.duration).getSeconds()%60 ) + 's',
-                                        albumTagList,
-                                        album.track_count,
-                                        album.genre,
-                                        '#album:' + album.id,
-                                        album.id,
-                                        album.title,
-                                        album.description,
-                                        album.artwork_url,
-                                        $albumpicture
+            albumTagList,
+            album.track_count,
+            album.genre,
+            '#album:' + album.id,
+            album.id,
+            album.title,
+            album.description,
+            album.artwork_url,
+            $albumpicture
           ]);
           
           $(html).appendTo('#playlist');
@@ -911,16 +921,16 @@
           ],[
           track.created_at,
           new Date(track.duration).getMinutes() + 'mn' + ( new Date(track.duration).getSeconds()%60 ) + 's',
-                                        trackTagList,
-                                        track.genre,
-                                        track.description,
-                                        track.track_type,
-                                        track.permalink_url,
-                                        '#'+linkType+':'+ linkVal + ':track:'+ track.id,
-                                        attributes,
-                                        track.id,
-                                        $trackpicture,
-                                        OursoPhone.utils.htmlEncode(track.title)
+            trackTagList,
+            track.genre,
+            track.description,
+            track.track_type,
+            track.permalink_url,
+            '#'+linkType+':'+ linkVal + ':track:'+ track.id,
+            attributes,
+            track.id,
+            $trackpicture,
+            OursoPhone.utils.htmlEncode(track.title)
           ]);
           $(html).appendTo('#playlist');
         },

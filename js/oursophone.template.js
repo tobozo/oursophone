@@ -1,6 +1,6 @@
     var TemplateStore = {
       config: {
-        folder: '/templates/',
+        folder: 'templates/',
         extension: 'tpl'
       },
       init: function(callback) {

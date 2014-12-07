@@ -1,1 +1,0 @@
-  <img class="album-picture" src="{album-cover}" /> 

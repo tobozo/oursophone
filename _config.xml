@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns     = "http://www.w3.org/ns/widgets"
+        xmlns:gap = "http://phonegap.com/ns/1.0"
+        id        = "<%= id %>"
+        version   = "<%= version %>"
+        >
+
+    <name><%= name %></name>
+    <description><%= description %></description>
+    <author href="<%= author.url %>" email="<%= author.email %>"><%= author.name %></author>
+
+    <preference name="phonegap-version" value="3.3.0" />
+    <preference name="orientation"      value="portrait" />
+    <preference name="target-device"    value="universal" />
+    <preference name="fullscreen"       value="false" />
+    <preference name="permissions"      value="none"/>
+
+    <access origin="*" />
+
+    <icon src="icon.png" />
+    <icon src="res/icon/android/icon-48-mdpi.png"   gap:platform="android"    gap:density="mdpi" />
+    <icon src="res/icon/android/icon-72-hdpi.png"   gap:platform="android"    gap:density="hdpi" />
+    <icon src="res/icon/android/icon-96-xhdpi.png"  gap:platform="android"    gap:density="xhdpi" />
+</widget>

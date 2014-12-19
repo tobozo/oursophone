@@ -9,7 +9,7 @@
         autoplay: true,     /* BOOL   : will automatically play the next song in the current album/taglist */
         theme: 'default',   /* STRING : must be in /css folder and named oursophone.theme.[string].css */
         thumbs: {
-          autoresize: true, /* BOOL : enable dynamic thumbs resize on document load/resize */
+          autoresize: false, /* BOOL : enable dynamic thumbs resize on document load/resize */
           rowsperalbum: 4,  /* INT  : amount of thumbnails per row for album thumbs */
           rowspertrack: 5   /* INT  : amount of thumbnails per row for track thumbs */
         }

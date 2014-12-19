@@ -13,5 +13,4 @@ public/copyrighted-content
 .DS_Store
 Thumbs.db
 /coverage/*
-.cordova/*
 /build/*

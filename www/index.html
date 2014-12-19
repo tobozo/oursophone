@@ -22,10 +22,11 @@
         <meta charset="utf-8" />
         <meta name="format-detection" content="telephone=no" />
         <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
-        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+        <!-- meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" / -->
         <link rel="stylesheet" type="text/css" href="css/index.css" />
         
         <link rel="stylesheet" type="text/css" href="css/oursophone.css"></link>
+        <link rel="stylesheet" type="text/css" href="css/oursophone.phonegap.css"></link>
         <script src="js/jquery-1.11.1/jquery.min.js"></script>
         <script type="text/javascript" src="https://connect.soundcloud.com/sdk.js"></script>
         <title>Oursophone</title>
@@ -38,6 +39,45 @@
         <script type="text/javascript">
           (function(){
 
+              SC._baseUrl = 'https:' + SC._baseUrl;
+              SC.options.baseUrl = SC._baseUrl;
+              /* 
+                 SC sends file://api.soundcloud.com requests 
+                 when in phonegap, this method forces https 
+               */
+              SC.prepareRequestURI = function (path, query) {
+                  var k,
+                  uri,
+                  v;
+                  if (query == null) {
+                      query = {
+                      }
+                  }
+                  uri = new SC.URI(path, {
+                      decodeQuery: true
+                  });
+                  for (k in query) {
+                      if (!__hasProp.call(query, k)) continue;
+                      v = query[k];
+                      uri.query[k] = v
+                  }
+                  if (uri.isRelative()) {
+                      uri.host = this.hostname('api');
+                      uri.scheme = window.location.protocol.slice(0, - 1)
+                      if(uri.scheme == 'file') {
+                        // maybe running phonegap ?
+                        uri.scheme = 'https';
+                      }
+                  }
+                  if (this.accessToken() != null) {
+                      uri.query.oauth_token = this.accessToken();
+                      uri.scheme = 'https'
+                  } else {
+                      uri.query.client_id = this.options.client_id
+                  }
+                  return uri
+              }
+          
               // Initialize the SoundCloud Javascript SDK
               SC.initialize({
                 client_id: OursoPhone.config.scClientID

@@ -8,8 +8,9 @@
         CORSRelay: false,   /* Priv.  : changing this has no effect */
         autoplay: true,     /* BOOL   : will automatically play the next song in the current album/taglist */
         theme: 'default',   /* STRING : must be in /css folder and named oursophone.theme.[string].css */
+        isInWebView: window.location.protocol.slice(0, - 1)=='file' ? true : false,
         thumbs: {
-          autoresize: false, /* BOOL : enable dynamic thumbs resize on document load/resize */
+          autoresize: true, /* BOOL : enable dynamic thumbs resize on document load/resize */
           rowsperalbum: 4,  /* INT  : amount of thumbnails per row for album thumbs */
           rowspertrack: 5   /* INT  : amount of thumbnails per row for track thumbs */
         }
@@ -39,10 +40,14 @@
       
       init: function(options) {
         
-        
-        
-        $(window).on('resize', OursoPhone.calcThumbsSize);
-        
+        if(OursoPhone.config.isInWebView) {
+          OursoPhone.config.autoplay = false;
+          OursoPhone.config.thumbs.autoresize = false;
+        } else {
+          if(OurspPhone.Config.thumbs.autoresize) {
+            $(window).on('resize', OursoPhone.calcThumbsSize);
+          }
+        }
         
         // template populating for the lazy
         String.prototype.replaceArray = function(find, replace) {
@@ -413,6 +418,39 @@
       
       on: {
         
+        navigatorPlayerClick: function() {
+          if($(this).attr('data-href')!='') {
+            if(location.hash!=$(this).attr('data-href')) {
+              location.href = $(this).attr('data-href');
+              //onHashChanged();
+            }
+          }
+          return false;
+        },
+        
+        webViewPlayerClick: function() {
+          var trackId = $(this).attr('data-id');
+          console.log('attempting to stream track #', trackId);
+          SC.stream("/tracks/" + trackId, function(player) {
+            console.log('receiving stream ', trackId, player);
+            if( OursoPhone.currentPlayer ) {
+              console.log('pausing previous stream');
+              OursoPhone.currentPlayer.pause(); 
+            }
+            player.play();
+            OursoPhone.currentPlayer = player;
+            //OursoPhone.on.streamReady(track);
+          });
+          if($(this).attr('data-href')!='') {
+            if(location.hash!=$(this).attr('data-href')) {
+              location.href = $(this).attr('data-href');
+              //onHashChanged();
+            }
+          }
+          return false;
+        },
+        
+        
         tagListLoaded: function(tracks) {
           var $playlist = $("#playlist"), $viewModeControl;
           $playlist.fadeOut(150);
@@ -434,16 +472,13 @@
             $('#playlist').attr('data-display-mode', mode);
           });
           
-          $('trackbox').off().on('click', function() {
-            if($(this).attr('data-href')!='') {
-              if(location.hash!=$(this).attr('data-href')) {
-                location.href = $(this).attr('data-href');
-                //onHashChanged();
-              }
-            }
-            return false;
-          });
           
+          // TODO : use internal route
+          if(OursoPhone.config.isInWebView) {          
+            $('trackbox').off().on('click', OursoPhone.on.webViewPlayerClick);
+          } else {
+            $('trackbox').off().on('click', OursoPhone.on.navigatorPlayerClick);
+          }          
           $playlist.fadeIn(150);
           OursoPhone.utils.interfaceRelease();
           OursoPhone.calcThumbsSize();
@@ -473,15 +508,13 @@
           
           setTimeout(OursoPhone.on.tagInserted, 300);
           
-          $('trackbox,albumbox').off().on('click', function() {
-            if($(this).attr('data-href')!='') {
-              if(location.hash!=$(this).attr('data-href')) {
-                location.href = $(this).attr('data-href');
-                //onHashChanged();
-              }
-            }
-            return false;
-          });
+          if(OursoPhone.config.isInWebView) {          
+            $('trackbox').off().on('click', OursoPhone.on.webViewPlayerClick);
+          } else {
+            $('trackbox').off().on('click', OursoPhone.on.navigatorPlayerClick);            
+          }
+          
+          $('albumbox').off().on('click', OursoPhone.on.navigatorPlayerClick);
           
           $('trackbox').removeClass('active');
           
@@ -510,15 +543,7 @@
           $playlist.fadeOut(150);
           $playlist.html('').attr('data-album-id', null).attr('data-song-id', null);
           playlists.forEach( OursoPhone.ui.drawAlbum );
-          $('albumbox').on('click', function() {
-            if($(this).attr('data-href')!='') {
-              if(location.hash!=$(this).attr('data-href')) {
-                location.href = $(this).attr('data-href');
-                //onHashChanged();
-              }
-            }
-            return false;
-          });
+          $('albumbox').on('click', OursoPhone.on.navigatorPlayerClick);
           $playlist.fadeIn(150);
           OursoPhone.calcThumbsSize()
         },
@@ -609,54 +634,56 @@
           $('trackbox').removeClass('active');
           $('trackbox[data-index="'+ OursoPhone.currentTrack.id +'"]').addClass('active');
           
-          if( currentPlayer ) {
-            currentPlayer.pause();
-            //audioManager.removeAudioPlayer( currentPlayer._id );
-          }
-          
-          SC.stream("/tracks/" + OursoPhone.currentTrack.id, {
-            autoPlay: true,
-            usePeakData:true,
-            useWaveformData:true,
-            useEQData:true,
-            ontimedcomments: OursoPhone.ui.drawComment,
-            onloadedmetadata: function(data) {
-              console.log('loaded metadata', this, data);
-            },
-            onbufferchange:function() {
-              //console.log('buffer change');
-            },
-            whileloading:function() {
-              /*
-               *                if(this._a===undefined) return;
-               *                console.log('while loading', this);
-               *                audio = this._a;
-               *                
-               *                audio.volume = 1/3;
-               *                audio.controls = true;
-               *                
-               *                audio.addEventListener('canplay', function() {
-               *                    // Timing issue with Chrome - if console opened, audioprocess stops firing during playback?
-               *                    // a timeout here seems to help, but does not completely fix.
-               *                    window.setTimeout(function() {
-               *                        connect();
-            }, 20);
-            }, false);*/
-            },
-            whileplaying: function () {
-              //console.log("track is playing", this._a, this._a.onaudioprocess );
-              if(this._a.onaudioprocessattached===undefined) {
-                console.log('attaching context', this);
-                /*
-                 *                setTimeout(function() {
-                 *                  //connect()
-              }, 2500);*/
-                this._a.onaudioprocessattached = true;
-              }
-              //console.log(this.peakData[0]);
+          if(OursoPhone.config.isInWebView) {
+            OursoPhone.utils.interfaceRelease();
+          } else {
+            if( currentPlayer ) {
+              currentPlayer.pause();
+              //audioManager.removeAudioPlayer( currentPlayer._id );
             }
-          }, OursoPhone.on.streamReady);
-          
+            SC.stream("/tracks/" + OursoPhone.currentTrack.id, {
+              autoPlay: true,
+              usePeakData: true,
+              useWaveformData: true,
+              useEQData: true,
+              ontimedcomments: OursoPhone.ui.drawComment,
+              onloadedmetadata: function(data) {
+                console.log('loaded metadata', this, data);
+              },
+              onbufferchange:function() {
+                //console.log('buffer change');
+              },
+              whileloading:function() {
+                /*
+                *                if(this._a===undefined) return;
+                *                console.log('while loading', this);
+                *                audio = this._a;
+                *                
+                *                audio.volume = 1/3;
+                *                audio.controls = true;
+                *                
+                *                audio.addEventListener('canplay', function() {
+                *                    // Timing issue with Chrome - if console opened, audioprocess stops firing during playback?
+                *                    // a timeout here seems to help, but does not completely fix.
+                *                    window.setTimeout(function() {
+                *                        connect();
+              }, 20);
+              }, false);*/
+              },
+              whileplaying: function () {
+                //console.log("track is playing", this._a, this._a.onaudioprocess );
+                if(this._a.onaudioprocessattached===undefined) {
+                  console.log('attaching context', this);
+                  /*
+                  *                setTimeout(function() {
+                  *                  //connect()
+                }, 2500);*/
+                  this._a.onaudioprocessattached = true;
+                }
+                //console.log(this.peakData[0]);
+              }
+            }, OursoPhone.on.streamReady);
+          }
           // urlImg  = track.waveform_url.replace('http://', '');
           // urlImg  = track.waveform_url.replace('https://', '');
           

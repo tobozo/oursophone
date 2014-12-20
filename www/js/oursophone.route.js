@@ -58,15 +58,15 @@
           if ( args[3] !=$('#playlist').attr('data-song-id') 
             && args[3] !=$('#track-description trackbox[data-id="'+args[3]+'"]').attr('data-id') ) {
             Route.play.song(args);            
-            }
-            switch(args[0]) {
-              case 'album':
-                Route.play.album(args);
-                break;
-              case 'tag':
-                Route.play.tag(args);
-                break;
-            }
+          }
+          switch(args[0]) {
+            case 'album':
+              Route.play.album(args);
+              break;
+            case 'tag':
+              Route.play.tag(args);
+              break;
+          }
         },
         album: function(args) { 
           $('#playlist').attr('data-tag-id', 0);

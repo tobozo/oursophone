@@ -44,7 +44,7 @@
           OursoPhone.config.autoplay = false;
           OursoPhone.config.thumbs.autoresize = false;
         } else {
-          if(OurspPhone.Config.thumbs.autoresize) {
+          if(OursoPhone.config.thumbs.autoresize) {
             $(window).on('resize', OursoPhone.calcThumbsSize);
           }
         }
@@ -392,6 +392,20 @@
           OursoPhone.waveformData = waveformData;
         },
         
+        animateWaveformData: function(waveformData) {
+          //waveformData = JSON.parse(data);
+          console.log('storing waveformData', waveformData);
+          OursoPhone.player.setWaveformData(waveformData);
+          if(waveformData!==undefined) {
+            cancelAnimationFrame( OursoPhone.on.dataWaveformReady );
+            requestAnimationFrame(OursoPhone.on.dataWaveformReady);
+          } else {
+            alert('dahoops');
+          }
+        },
+        
+        
+        
         songProgress: function() {
           var currentPlayer = OursoPhone.player.getCurrent();
           if(currentPlayer===undefined) return;
@@ -438,8 +452,7 @@
               OursoPhone.currentPlayer.pause(); 
             }
             player.play();
-            OursoPhone.currentPlayer = player;
-            //OursoPhone.on.streamReady(track);
+            OursoPhone.on.streamReady(player);
           });
           if($(this).attr('data-href')!='') {
             if(location.hash!=$(this).attr('data-href')) {
@@ -703,22 +716,18 @@
           $img.attr('src', track.waveform_url);
           $('#canvas-overlay').empty().append($img);
           
+          if(OursoPhone.config.isInWebView) {
+            // enable waveform animated plugin
+            urlData = track.waveform_url.replace('http://w1', 'http://wis');
+            urlData = track.waveform_url.replace('https://w1', 'https://wis');
+            $.get(urlData, OursoPhone.player.animateWaveformData);
+          }
+          
           if(OursoPhone.config.CORSRelay!==false) {
             // enable waveform animated plugin
             urlData = track.waveform_url.replace('http://w1', 'wis');
             urlData = track.waveform_url.replace('https://w1', 'wis');
-            
-            $.get(OursoPhone.config.CORSRelay + '?w=' + urlData, function(data) {
-              waveformData = JSON.parse(data);
-              //console.log('storing waveformData', waveformData);
-              OursoPhone.player.setWaveformData(waveformData);
-              if(waveformData!==undefined) {
-                cancelAnimationFrame( OursoPhone.on.dataWaveformReady );
-                requestAnimationFrame(OursoPhone.on.dataWaveformReady);
-              } else {
-                alert('dahoops');
-              }
-            })
+            $.get(OursoPhone.config.CORSRelay + '?w=' + urlData, OursoPhone.player.animateWaveformData);
           }
         },
         

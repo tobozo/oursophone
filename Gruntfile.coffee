@@ -19,8 +19,8 @@ module.exports = (grunt) ->
               email: 'gard@assassine.com'
               href: 'http://assassine.org'
               text: 'tobozo'
-          minSdkVersion: 21
-          targetSdkVersion: 21
+          minSdkVersion: 19
+          targetSdkVersion: 19
         versionCode: 1
         permissions: []
 

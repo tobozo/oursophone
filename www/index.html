@@ -27,19 +27,20 @@
         
         <link rel="stylesheet" type="text/css" href="css/oursophone.css"></link>
         <link rel="stylesheet" type="text/css" href="css/oursophone.phonegap.css"></link>
+        <script type="text/javascript" src="phonegap.js"></script>
+        <script src="js/polyfills/raf.js"></script>
         <script src="js/jquery-1.11.1/jquery.min.js"></script>
         <script type="text/javascript" src="https://connect.soundcloud.com/sdk.js"></script>
         <title>Oursophone</title>
     </head>
     <body>
-        <!-- script type="text/javascript" src="phonegap.js"></script -->
         <script type="text/javascript" src="js/oursophone.js"></script>
         <script type="text/javascript" src="js/oursophone.route.js"></script>
         <script type="text/javascript" src="js/oursophone.template.js"></script>
         <script type="text/javascript">
           (function(){
 
-              SC._baseUrl = 'https:' + SC._baseUrl;
+          SC._baseUrl = 'https:' + SC._baseUrl;
               SC.options.baseUrl = SC._baseUrl;
               /* 
                  SC sends file://api.soundcloud.com requests 

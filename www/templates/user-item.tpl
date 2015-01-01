@@ -11,6 +11,7 @@
        <span class="user-followingcount" title="following">{user-followingcount}</span>
       )
     </div>
+    <label for="user-description-toggler"><input type="checkbox" name="user-description-toggler" class="user-description-toggler" /></label>
     <span class="user-description">{user-description}</span>
     <span class"user-website"><a class="user-websitetitle" target="_blank" href="{user-website}">{user-websitetitle}</a></span>
   </div>

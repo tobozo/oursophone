@@ -423,6 +423,11 @@ tag {
   overflow:auto;
 }
 
+.user-description-toggler, label[for=user-description-toggler] {
+  /* used by mobile view */
+  display: none; 
+}
+
 .user-stats {
   text-align: left;
 }

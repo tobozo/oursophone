@@ -6,7 +6,7 @@ module.exports = (grunt) ->
 
     phonegap:
       config:
-        plugins: []
+        plugins: ['https://github.com/simplec-dev/AndroidMediaGestureSetting.git']
         platforms: ['android']
         config:
           template: '_config.xml'
@@ -26,7 +26,7 @@ module.exports = (grunt) ->
 
     connect:
       options:
-        hostname: 'localhost'
+        hostname: '192.168.1.15'
         livereload: 35729
         port: 3000
       server:

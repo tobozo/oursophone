@@ -27,7 +27,11 @@
         $tpl = document.querySelector('#'+id);
         
         TemplateStore.store[id] = $tpl.innerHTML;
-        $tpl.remove();
+        
+        if($tpl) {
+          $tpl.parentElement.removeChild($tpl);
+        }
+        
         return TemplateStore.store[id];
       },
       load: function(id, callback) {

@@ -1,0 +1,61 @@
+ 
+#player-header {
+  width:100%;
+  min-height:inherit; 
+}
+#playlist {
+  height:auto;
+  width:100%;
+}
+
+.player-click {
+  display: block;
+  font-size: 5vw;
+  line-height: 10vw;
+}
+
+.volume-control {
+  height: 8vh;
+  line-height: 1vh;
+  font-size: 8vw;
+  padding-left: 80px;
+  clear: both;
+  -webkit-transform: scale(2, 2);
+  -webkit-transform-origin: center 0;
+  margin-top: 5vw;
+  padding-bottom: 6vw;
+}
+
+.user-stats {
+  font-size: 5vw; 
+}
+.user-description {
+  font-size: 3vw;
+  display:none;
+}
+.user-website {
+  font-size: 2vw;
+  color: white;
+  display:none;
+}
+
+label[for="user-description-toggler"] {
+  display: inline-block;
+}
+
+input[name="user-description-toggler"] {
+  display: inline-block;
+  visibility:hidden;
+  width:5vw;
+  height:5vw;
+  position: relative;
+}
+
+input[name="user-description-toggler"]+label:after {
+  content:"+";
+  position:absolute;
+}
+
+input[name="user-description-toggler"]:checked+label:after{
+   content:"-";
+}

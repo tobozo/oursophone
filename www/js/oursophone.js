@@ -8,7 +8,7 @@
         CORSRelay: false,   /* Priv.  : changing this has no effect */
         autoplay: true,     /* BOOL   : will automatically play the next song in the current album/taglist */
         theme: 'default',   /* STRING : must be in /css folder and named oursophone.theme.[string].css */
-        isInWebView: window.location.protocol.slice(0, - 1)=='file' ? true : false,
+        isInWebView: !!window._cordovaNative,
         thumbs: {
           autoresize: true, /* BOOL : enable dynamic thumbs resize on document load/resize */
           rowsperalbum: 4,  /* INT  : amount of thumbnails per row for album thumbs */
@@ -43,6 +43,7 @@
         if(OursoPhone.config.isInWebView) {
           OursoPhone.config.autoplay = false;
           OursoPhone.config.thumbs.autoresize = false;
+          OursoPhone.config.theme = 'mobile';
         } else {
           if(OursoPhone.config.thumbs.autoresize) {
             $(window).on('resize', OursoPhone.calcThumbsSize);
@@ -139,6 +140,7 @@
       },
       
       calcThumbsSize: function() {
+        //if(!OursoPhone.config.thumbs.autoresize) return;
         /* will autoresize thumbnails to fit the number of columns (see config) */
         var wSize;
         var trackWidth;
@@ -150,10 +152,6 @@
         var lastRuleIndex;
         var rule;
         var $scrollBarChecker;
-        
-        if(OursoPhone.config.thumbs.autoresize !== true) {
-          return;
-        }
 
         $scrollBarChecker = $('<div id="scrollbar-checker"></div>');
         $scrollBarChecker.appendTo('#playlist');
@@ -215,6 +213,9 @@
           lastStylesheet.cssRules.length-1
         );                        
         
+        if(OursoPhone.config.thumbs.autoresize !== true) {
+          $('.album').css({maxHeight: $('.album').width() })
+        }
         
       },
       
@@ -942,21 +943,21 @@
           }
           /* templating */
           html = $tracktpl.replaceArray([
-          "{track-createdat}",
-          "{track-duration}",
-          "{track-taglist}",
-          "{track-genre}",
-          "{track-description}",
-          "{track-tracktype}",
-          "{track-permalinkurl}",
-          "{album-url}",
-          "{data-attributes}",
-          "{data-index}",
-          "{track-picture}",
-          "{track-title}"
+            "{track-createdat}",
+            "{track-duration}",
+            "{track-taglist}",
+            "{track-genre}",
+            "{track-description}",
+            "{track-tracktype}",
+            "{track-permalinkurl}",
+            "{album-url}",
+            "{data-attributes}",
+            "{data-index}",
+            "{track-picture}",
+            "{track-title}"
           ],[
-          track.created_at,
-          new Date(track.duration).getMinutes() + 'mn' + ( new Date(track.duration).getSeconds()%60 ) + 's',
+            track.created_at,
+            new Date(track.duration).getMinutes() + 'mn' + ( new Date(track.duration).getSeconds()%60 ) + 's',
             trackTagList,
             track.genre,
             track.description,

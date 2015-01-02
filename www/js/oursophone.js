@@ -39,6 +39,10 @@
       },
       
       init: function(options) {
+        if(options) {
+          console.log('merging', OursoPhone.config, options);
+          OursoPhone.config = $.extend(OursoPhone.config, options); // Overwrite settings
+        }
         
         if(OursoPhone.config.isInWebView) {
           OursoPhone.config.autoplay = false;
@@ -105,6 +109,8 @@
           }
           
         });
+        
+        return this;
 
       },
       

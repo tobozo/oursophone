@@ -2,7 +2,7 @@
     <trackbox data-href="{album-url}" class="sound" {data-attributes} data-index="{data-index}">
       {track-picture}
       <div class="track-title">
-        <span class="track-titlespan">{track-title}</span>
+        <span class="track-titlespan" data-download-url="{track-download-url}">{track-title}</span>
         <span class="track-description">{track-description}</span>
         <a class="track-permalinkurl" target="_blank" href="{track-permalinkurl}">permalink</a>
         <span class="track-genre">{track-genre}</span>

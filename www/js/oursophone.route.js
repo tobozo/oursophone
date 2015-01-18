@@ -54,11 +54,7 @@
             console.warn('Route: bad hash entry');
             return;
           }
-          // check if the requested song is not already playing
-          if ( args[3] !=$('#playlist').attr('data-song-id') 
-            && args[3] !=$('#track-description trackbox[data-id="'+args[3]+'"]').attr('data-id') ) {
-            Route.play.song(args);            
-          }
+          
           switch(args[0]) {
             case 'album':
               Route.play.album(args);
@@ -67,6 +63,13 @@
               Route.play.tag(args);
               break;
           }
+          
+          // check if the requested song is not already playing
+          if ( args[3] !=$('#playlist').attr('data-song-id') 
+            && args[3] !=$('#track-description trackbox[data-id="'+args[3]+'"]').attr('data-id') ) {
+            Route.play.song(args);            
+          }
+
         },
         album: function(args) { 
           $('#playlist').attr('data-tag-id', 0);

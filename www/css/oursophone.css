@@ -443,6 +443,7 @@ tag {
   display:block;
   float:left;
   width:50px;
+  margin: 0 1em 1em 0;
 }
 
 .user-avatarimg {
@@ -483,6 +484,9 @@ tag {
   display:block;
 }
 
+a.user-websitetitle[href=""] {
+  display:none;
+}
 
 
 

@@ -1,7 +1,12 @@
  
+#player {
+  overflow: hidden;
+}
+ 
 #player-header {
   width:100%;
   min-height:inherit; 
+  overflow:hidden;
 }
 #playlist {
   height:auto;
@@ -15,23 +20,103 @@
 }
 
 .volume-control {
-  height: 8vh;
-  line-height: 1vh;
-  font-size: 8vw;
-  padding-left: 80px;
-  clear: both;
-  -webkit-transform: scale(2, 2);
-  -webkit-transform-origin: center 0;
-  margin-top: 5vw;
-  padding-bottom: 6vw;
+    height: 9vh;
+    line-height: 9vw;
+    padding: 0;
+    clear: both;
+    margin-top: 5vw;
+}
+
+.volume-control label {
+  /*display: none; */
+}
+
+.waveform-holder {
+  transition: all 0.3s ease;
+  max-height: 1500px;
+  overflow: hidden;
+}
+
+.user-description {
+  transition: all 0.3s ease;  
+}
+
+.waveform-holder.contracted  {
+  transform:scale(1, 0.25);
+  transform-origin: top center;
+  -webkit-transform: scale(1, 0.25);
+  -webkit-transform-origin: top center;
+}
+.waveform-holder.contracted+div {
+  transform:scale(1, 0.25), translate(0, -100%);
+  transform-origin: top center;
+  -webkit-transform: translate(0, -50%) scale(1, 0.25);
+  -webkit-transform-origin: top center;
+}
+
+.waveform-holder.contracted+div .search-button {
+  font-size: 5em; 
+}
+
+
+.waveform-holder.contracted+div+div#user-description {
+  margin-top:-25%;
+  max-height: inherit;
+  height: 75vh;
+  transition: all 0.3s ease;
+}
+
+.waveform-holder.contracted+div+div#user-description.contracted {
+  height: 0vh;
+}
+
+
+.waveform-holder.contracted+div+div .user-avatarurl {
+  width:100px;
+  margin: 0 1em 1em 0;
+}
+.waveform-holder.contracted+div+div .user-description {
+  display: block;
+}
+
+.waveform-holder.contracted+div+div .user-stats {
+  font-size: 5vw;
+}
+
+
+input[type=range] {
+  -webkit-appearance: none;
+  background-color: silver;
+  width: 30vw;
+  height:5vw;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  background-color: #666;
+  opacity: 0.5;
+  width: 2vw;
+  height: 5vw;
+}
+
+.plus-button, .minus-button {
+  width: 5vw;
+  height: 5vw;
+  background-size: cover;
+}
+
+
+.search-button {
+  font-size: 5em; 
 }
 
 .user-stats {
-  font-size: 5vw; 
+  font-size: 4vw; 
 }
 .user-description {
   font-size: 3vw;
   display:none;
+  max-height:75%;
 }
 .user-website {
   font-size: 2vw;

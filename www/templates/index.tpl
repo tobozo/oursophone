@@ -24,5 +24,5 @@
     <div id="track-description"></div>
     <ol id="comments"></ol>
   </header>
-  <div id="playlist" data-display-mode="thumb"></div>
+  <div id="playlist" data-display-mode="thumb" data-tag-id="0" data-album-id="0" data-song-id="0" data-user=""></div>
 </section> 

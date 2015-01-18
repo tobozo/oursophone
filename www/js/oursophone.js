@@ -132,7 +132,7 @@
       },
       
       loadTheme: function(callback) {
-        if( !/^[a-z0-9\_-]+$/i.test(OursoPhone.config.theme) ) {
+        if( !/^[a-z0-9_\-]+$/i.test(OursoPhone.config.theme) ) {
           callback();
           return;
         }
@@ -488,6 +488,44 @@
           
           // TODO : use internal route
           $('trackbox').off().on('click', OursoPhone.on.playerClick);
+          $playlist.fadeIn(150);
+          
+          if(OursoPhone.config.isInWebView) {
+            $('#playlist').attr('data-display-mode', 'thumb');
+          }
+          
+          OursoPhone.utils.interfaceRelease();
+          OursoPhone.calcThumbsSize();
+        },
+
+
+        trackListLoaded: function(tracks) {
+          var $playlist = $("#playlist"), $viewModeControl;
+          $playlist.fadeOut(150);
+          $playlist.html('').attr('data-album-id', 0).attr('data-display-mode', 'list');
+          
+          tracks.forEach( OursoPhone.ui.drawTracks );
+          setTimeout(OursoPhone.on.tagInserted, 300);
+          
+          $viewModeControl = TemplateStore.get('view-mode-control');
+          $($viewModeControl).addClass('track-list').appendTo('#playlist');
+          
+          $('.display-mode-box div').off().on('click', function() {
+            var mode = this.className.split('-')[2];
+            if(mode==='up') {
+              location.href = '#';
+              //onHashChanged();
+              return false;
+            }
+            $('#playlist').attr('data-display-mode', mode);
+          });
+          
+          // TODO : use internal route
+          
+          
+          $('trackbox').off().on('click', OursoPhone.on.playerClick);
+          
+          
           $playlist.fadeIn(150);
           
           if(OursoPhone.config.isInWebView) {
@@ -917,9 +955,15 @@
             linkType = 'tag';
             linkVal = $("#playlist").attr('data-tag-id')
           } else {
-            linkType = 'album';
-            linkVal = $("#playlist").attr('data-album-id');
+            if( $('#playlist').attr('data-user')!='' ) {
+              linkType = 'user';
+              linkVal = $("#playlist").attr('data-user');
+            } else {
+              linkType = 'album';
+              linkVal = $("#playlist").attr('data-album-id');
+            }
           }
+                    
           if(track.streamable!==true) {
             console.warn('track is not sreamable', track);
             return;
@@ -932,6 +976,12 @@
             console.info('track "'+track.title+'" is downloadable');
             // set download link?
           }
+          if(track.download_url===undefined) {
+            track.download_url = ''; 
+          }
+          if(track.track_type===null) {
+            track.track_type = ''; 
+          }          
           // build attributes list
           ['id', 'title', 'uri', 'duration', 'commentable', 'description', 'artwork_url'].forEach(function(attr) {
             attributes += 'data-' + attr + '="' + OursoPhone.utils.attrEncode(track[attr]) + '" ';
@@ -1103,8 +1153,8 @@
             // user ID
             SC.get('/users/' + searchStr + '/tracks', function(tracks) {
               if(tracks.length>0) {
-                $('#playlist').attr('data-tag-id', null);
-                OursoPhone.on.tagListLoaded(tracks);
+                $('#playlist').attr('data-tag-id', 0);
+                OursoPhone.on.trackListLoaded(tracks);
               }
             });
           } else {

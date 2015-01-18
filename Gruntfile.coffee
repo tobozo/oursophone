@@ -6,7 +6,10 @@ module.exports = (grunt) ->
 
     phonegap:
       config:
-        plugins: ['https://github.com/simplec-dev/AndroidMediaGestureSetting.git']
+        root: 'www'
+        cordova: '.cordova'
+        name: '<%= pkg.name %>'
+        plugins: ['https://github.com/simplec-dev/AndroidMediaGestureSetting.git', 'org.apache.cordova.file-transfer', 'com.cmpsoft.mobile.plugin.download']
         platforms: ['android']
         config:
           template: '_config.xml'
@@ -23,10 +26,12 @@ module.exports = (grunt) ->
           targetSdkVersion: 19
         versionCode: 1
         permissions: []
+        androidApplicationName: 'org.assassine.oursophone'
+        screenOrientation: 'landscape'
 
     connect:
       options:
-        hostname: 'localhost'
+        hostname: '192.168.1.15'
         livereload: 35729
         port: 3000
       server:

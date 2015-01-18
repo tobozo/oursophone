@@ -14,3 +14,7 @@ public/copyrighted-content
 Thumbs.db
 /coverage/*
 /build/*
+www/js/phonegap.js
+www/js/cordova.js
+www/js/phonegap_plugins.js
+www/js/plugins/*

@@ -4,7 +4,6 @@
         id        = "<%= id %>"
         version   = "<%= version %>"
         >
-
     <name><%= name %></name>
     <description><%= description %></description>
     <author href="<%= author.url %>" email="<%= author.email %>"><%= author.name %></author>
@@ -17,7 +16,7 @@
     <access origin="*" />
 
     <icon src="icon.png" />
-    <icon src="res/icon/android/icon-48-mdpi.png"   gap:platform="android"    gap:density="mdpi" />
-    <icon src="res/icon/android/icon-72-hdpi.png"   gap:platform="android"    gap:density="hdpi" />
-    <icon src="res/icon/android/icon-96-xhdpi.png"  gap:platform="android"    gap:density="xhdpi" />
+    <icon src="www/res/icon/android/icon-48-mdpi.png"   gap:platform="android"    gap:density="mdpi" />
+    <icon src="www/res/icon/android/icon-72-hdpi.png"   gap:platform="android"    gap:density="hdpi" />
+    <icon src="www/res/icon/android/icon-96-xhdpi.png"  gap:platform="android"    gap:density="xhdpi" />
 </widget>

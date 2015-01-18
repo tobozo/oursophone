@@ -22,12 +22,16 @@
         <meta charset="utf-8" />
         <meta name="format-detection" content="telephone=no" />
         <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
-        <!-- meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" / -->
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
         <link rel="stylesheet" type="text/css" href="css/index.css" />
         
         <link rel="stylesheet" type="text/css" href="css/oursophone.css"></link>
         <link rel="stylesheet" type="text/css" href="css/oursophone.phonegap.css"></link>
-        <script type="text/javascript" src="phonegap.js"></script>
+        <script type="text/javascript">
+        if(window._cordovaNative) {
+          document.write('<' + 'script type="text/javascript" src="js/cordova.js"' + '><' + '/script' + '>');
+        }
+        </script>
         <script src="js/polyfills/raf.js"></script>
         <script src="js/jquery-1.11.1/jquery.min.js"></script>
         <script type="text/javascript" src="https://connect.soundcloud.com/sdk.js"></script>
@@ -38,14 +42,15 @@
         <script type="text/javascript" src="js/oursophone.route.js"></script>
         <script type="text/javascript" src="js/oursophone.template.js"></script>
         <script type="text/javascript">
-          (function(){
-
-          SC._baseUrl = 'https:' + SC._baseUrl;
+          (function(isInWebView){
+            if(isInWebView) {
+              console.info('enabling SC webview hooks');
+              SC._baseUrl = 'https:' + SC._baseUrl;
               SC.options.baseUrl = SC._baseUrl;
-              /* 
-                 SC sends file://api.soundcloud.com requests 
-                 when in phonegap, this method forces https 
-               */
+              /*
+                SC sends file://api.soundcloud.com requests 
+                when in phonegap, this method forces https 
+              */
               SC.prepareRequestURI = function (path, query) {
                   var k,
                   uri,
@@ -78,16 +83,17 @@
                   }
                   return uri
               }
-          
-              // Initialize the SoundCloud Javascript SDK
-              SC.initialize({
-                client_id: OursoPhone.config.scClientID
-              });
+            }
 
-              // release the bear !
-              OursoPhone.init();
+            // Initialize the SoundCloud Javascript SDK
+            SC.initialize({
+              client_id: OursoPhone.config.scClientID
+            });
+
+            // release the bear !
+            OursoPhone.init();
               
-          }());
+          }(window._cordovaNative));
         </script>
     </body>
 </html>

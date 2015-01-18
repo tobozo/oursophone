@@ -1,4 +1,3 @@
-
     
     var OursoPhone = {
       
@@ -920,29 +919,29 @@
           }
           
           html = $albumtpl.replaceArray([
-          "{album-kind}",
-          "{album-createdat}",
-          "{album-duration}",
-          "{album-taglist}",
-          "{album-trackcount}",
-          "{album-genre}",
-          "{album-url}",
-          "{album-index}",
-          "{album-title}",
-          "{album-description}",
-          "{album-cover}",
-          "{album-picture}"
+            "{album-kind}",
+            "{album-createdat}",
+            "{album-duration}",
+            "{album-taglist}",
+            "{album-trackcount}",
+            "{album-genre}",
+            "{album-url}",
+            "{album-index}",
+            "{album-title}",
+            "{album-description}",
+            "{album-cover}",
+            "{album-picture}"
           ],[
-          album.kind,
-          album.created_at,
-          new Date(album.duration).getMinutes() + 'mn' + ( new Date(album.duration).getSeconds()%60 ) + 's',
+            album.kind,
+            album.created_at,
+            new Date(album.duration).getMinutes() + 'mn' + ( new Date(album.duration).getSeconds()%60 ) + 's',
             albumTagList,
             album.track_count,
             album.genre,
             '#album:' + album.id,
             album.id,
             album.title,
-            album.description,
+            TemplateStore.nl2br(album.description),
             album.artwork_url,
             $albumpicture
           ]);
@@ -1030,7 +1029,7 @@
             new Date(track.duration).getMinutes() + 'mn' + ( new Date(track.duration).getSeconds()%60 ) + 's',
             trackTagList,
             track.genre,
-            track.description,
+            TemplateStore.nl2br(track.description),
             track.track_type,
             track.permalink_url,
             track.download_url,
@@ -1196,31 +1195,31 @@
           })
           
           html = $usertpl.replaceArray([    
-          "{user-id}",
-          "{user-kind}",
-          "{user-fullname}",
-          "{user-permalinkurl}",
-          "{user-avatarurl}",
-          "{user-description}",
-          "{user-website}",
-          "{user-websitetitle}",
-          "{user-trackcount}",
-          "{user-playlistcount}",
-          "{user-followerscount}",
-          "{user-followingcount}"
+            "{user-id}",
+            "{user-kind}",
+            "{user-fullname}",
+            "{user-permalinkurl}",
+            "{user-avatarurl}",
+            "{user-description}",
+            "{user-website}",
+            "{user-websitetitle}",
+            "{user-trackcount}",
+            "{user-playlistcount}",
+            "{user-followerscount}",
+            "{user-followingcount}"
           ],[            
-          user.id,
-          user.kind,
-          user.full_name,
-          user.permalink_url,
-          user.avatar_url,
-          user.description,
-          user.website,
-          user.website_title,
-          user.track_count,
-          user.playlist_count,
-          user.followers_count,
-          user.followings_count
+            user.id,
+            user.kind,
+            user.full_name,
+            user.permalink_url,
+            user.avatar_url,
+            TemplateStore.nl2br(user.description),
+            user.website,
+            user.website_title,
+            user.track_count,
+            user.playlist_count,
+            user.followers_count,
+            user.followings_count
           ]);
           
           $userBlock.removeClass('contracted').html(html);

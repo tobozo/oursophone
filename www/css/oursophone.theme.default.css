@@ -11,6 +11,32 @@
   font-size: 12px;
 }
 
+
+[data-display-mode="list"] {
+  counter-reset: oursophone-track-counter;
+}
+
+[data-display-mode="list"] div.track:before {
+  color: white;
+  content: counter(oursophone-track-counter, decimal);
+  counter-increment: oursophone-track-counter;
+  font-size: 0.9em;
+  font-weight: bold;
+  height: 100%;
+  left: -0.3em;
+  position: absolute;
+  text-align: right;
+  top: 0;
+  width: 1.5em;
+}
+[data-display-mode="list"] .track {
+  display: block;
+  margin: 0;
+  padding-left: 1.5em;
+}
+
+
+
 [data-display-mode="thumb"] .track-picture, [data-display-mode="thumb"] .track-nopicture {
   /*
    * the width of this selector
@@ -99,8 +125,8 @@
 #playlist {
   background-color: #333;
 }
-
+/*
 #playlist:hover {
   background-color: #444;
-}
+}*/
 

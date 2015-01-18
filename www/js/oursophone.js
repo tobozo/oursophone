@@ -322,10 +322,15 @@
             
             if( $('#playlist').attr('data-tag-id')!=0 ) {
               linkType = 'tag';
-              linkVal = $("#playlist").attr('data-tag-id')
+              linkVal  = $("#playlist").attr('data-tag-id')
             } else {
-              linkType = 'album';
-              linkVal = $("#playlist").attr('data-album-id');
+              if($('#playlist').attr('data-user')!='') {
+                linkType = 'user';
+                linkVal  = $('#playlist').attr('data-user');
+              } else {
+                linkType = 'album';
+                linkVal  = $("#playlist").attr('data-album-id');
+              }
             }
             
             if( $(this).attr('data-id') == currentTrack ) {
@@ -367,8 +372,13 @@
               linkType = 'tag';
               linkVal = $("#playlist").attr('data-tag-id')
             } else {
-              linkType = 'album';
-              linkVal = $("#playlist").attr('data-album-id');
+              if( $('#playlist').attr('data-user')!='' ) {
+                linkType = 'user';
+                linkVal = $("#playlist").attr('data-user');
+              } else {
+                linkType = 'album';
+                linkVal = $("#playlist").attr('data-album-id');
+              }
             }
             
             if( $(this).attr('data-id') == currentTrack ) {
@@ -1154,6 +1164,8 @@
             SC.get('/users/' + searchStr + '/tracks', function(tracks) {
               if(tracks.length>0) {
                 $('#playlist').attr('data-tag-id', 0);
+                $('#playlist').attr('data-album-id', 0);
+                $('#playlist').attr('data-user', searchStr);
                 OursoPhone.on.trackListLoaded(tracks);
               }
             });

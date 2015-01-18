@@ -604,10 +604,8 @@ trackbox, albumbox {
   color: #880000
 }
 
-#playlist[data-album-id] albumbox:hover .album-title .album-descspan, 
 #playlist[data-album-id] albumbox.active .album-title .album-descspan,
-#playlist[data-album-id] trackbox.active .track-title .track_descspan,
-#playlist[data-album-id] trackbox:hover .track-title .track_descspan
+#playlist[data-album-id] trackbox.active .track-title .track_descspan
 {
   -webkit-transition: all 0.3s linear;
   transition: all 0.3s linear;
@@ -742,20 +740,16 @@ transition: all 0.5s linear 0s
 }
 
 
-trackbox:hover .track-title, 
 trackbox.active .track-title,
-albumbox.active .album-title,
-albumbox:hover .album-title
+albumbox.active .album-title
 {
   opacity:1;
   background-color: rgba(255, 255, 255, 0.3);
   text-shadow:0 0 3px #fff;
 }
 
-albumbox:hover .album-title .album-descspan, 
 albumbox.active .album-title .album-descspan,
-trackbox.active .track-title .track_descspan,
-trackbox:hover .track-title .track_descspan
+trackbox.active .track-title .track_descspan
 {
   -webkit-transition: all 0.3s linear;
   transition: all 0.3s linear;

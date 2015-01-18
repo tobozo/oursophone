@@ -16,20 +16,14 @@
           rowspertrack: 5   /* INT  : amount of thumbnails per row for track thumbs */
         }
       },
-      
       currentPlayer: undefined, /* shortcut to the SoundManager instance */
-      
       currentTrack: undefined, /* shortcut to the track playing */
-      
       graphUpdater: undefined, /* animationFrame used to update the graph */
-      
       waveformData: undefined, 
-      
       waveformWidth: undefined,
-      
       pixelTrans:"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
       templates: ['index', 'album-goback', 'album-item', 'album-no-picture', 'album-picture', 'track-item', 'track-no-picture', 'track-picture', 'user-item', 'view-mode-control'],
-      
+     
       loadTemplates: function() {
         var template = OursoPhone.templates.shift();
         if(template!==undefined) {
@@ -46,24 +40,9 @@
         }
         
         if(OursoPhone.config.isInWebView) {
-          //OursoPhone.config.autoplay = false;
           OursoPhone.config.thumbs.autoresize = false;
           OursoPhone.config.theme = 'mobile';
-          
-          // don't load the jquery mobile UI crap
-          $(document).bind("mobileinit", function(){
-            console.log('got mobile init');
-            $.extend(  $.mobile , { autoInitializePage: false })
-          });
           OursoPhone.config.gestureLoaded = true;
-
-/*          
-          $.getScript('js/jquery-1.11.1/jquery-mobile-1.4.5.min.js', function() {
-            console.log('loaded gestures plugin');
-          });
-*/          
-          
-          
           
         } else {
           if(OursoPhone.config.thumbs.autoresize) {
@@ -166,7 +145,6 @@
       },
       
       calcThumbsSize: function() {
-        //if(!OursoPhone.config.thumbs.autoresize) return;
         /* will autoresize thumbnails to fit the number of columns (see config) */
         var wSize;
         var trackWidth;
@@ -265,7 +243,6 @@
           string = (string === null)?"":string.toString();
           string = $('<div/>').text(string).html();
           return string.replace(/\n/gi, '<br />\n');
-          //
         },
         
         attrEncode: function(string) {
@@ -340,9 +317,7 @@
             
             if( $(this).attr('data-id') == currentTrack ) {
               if( trackIndex+1 < tracks.length ) {
-                //album_id = $('#playlist').attr('data-album-id');
                 track_id = $(tracks[trackIndex+1]).attr('data-id');
-                //if(album_id===undefined) return;
                 if(track_id===undefined || track_id===null) return;
                 nextTrackHash = '#'+linkType+':' + linkVal + ':track:' + $(tracks[trackIndex+1]).attr('data-id');
               }
@@ -350,7 +325,6 @@
           });
           if(nextTrackHash) {
             location.href = nextTrackHash;
-            //onHashChanged();
           } else {
             OursoPhone.utils.interfaceRelease();
           }
@@ -399,7 +373,6 @@
           });
           if(prevTrackHash) {
             location.href = prevTrackHash;
-            //onHashChanged();
           } else {
             OursoPhone.utils.interfaceRelease();
           }
@@ -431,7 +404,6 @@
         },
         
         animateWaveformData: function(waveformData) {
-          //waveformData = JSON.parse(data);
           console.log('storing waveformData', waveformData);
           OursoPhone.player.setWaveformData(waveformData);
           if(waveformData!==undefined) {
@@ -441,8 +413,6 @@
             alert('dahoops');
           }
         },
-        
-        
         
         songProgress: function() {
           var currentPlayer = OursoPhone.player.getCurrent();
@@ -474,32 +444,18 @@
           if($(this).attr('data-href')!='') {
             if(location.hash!=$(this).attr('data-href')) {
               location.href = $(this).attr('data-href');
-              //onHashChanged();
             }
           }
           return false;
         },
 
         tagListLoaded: function(tracks) {
-          var $playlist = $("#playlist"), $viewModeControl;
+          var $playlist = $("#playlist");
           $playlist.fadeOut(150);
           $playlist.html('').attr('data-album-id', 0).attr('data-display-mode', 'list');
           
           tracks.forEach( OursoPhone.ui.drawTracks );
           setTimeout(OursoPhone.on.tagInserted, 300);
-          
-          $viewModeControl = TemplateStore.get('view-mode-control');
-          $($viewModeControl).addClass('tag-list').appendTo('#playlist');
-          
-          $('.display-mode-box div').off().on('click', function() {
-            var mode = this.className.split('-')[2];
-            if(mode==='up') {
-              location.href = '#';
-              //onHashChanged();
-              return false;
-            }
-            $('#playlist').attr('data-display-mode', mode);
-          });
           
           // TODO : use internal route
           $('trackbox').off().on('click', OursoPhone.on.playerClick);
@@ -513,33 +469,15 @@
           OursoPhone.calcThumbsSize();
         },
 
-
         trackListLoaded: function(tracks) {
-          var $playlist = $("#playlist"), $viewModeControl;
+          var $playlist = $("#playlist");
           $playlist.fadeOut(150);
           $playlist.html('').attr('data-album-id', 0).attr('data-display-mode', 'list');
           
           tracks.forEach( OursoPhone.ui.drawTracks );
           setTimeout(OursoPhone.on.tagInserted, 300);
           
-          $viewModeControl = TemplateStore.get('view-mode-control');
-          $($viewModeControl).addClass('track-list').appendTo('#playlist');
-          
-          $('.display-mode-box div').off().on('click', function() {
-            var mode = this.className.split('-')[2];
-            if(mode==='up') {
-              location.href = '#';
-              //onHashChanged();
-              return false;
-            }
-            $('#playlist').attr('data-display-mode', mode);
-          });
-          
-          // TODO : use internal route
-          
-          
           $('trackbox').off().on('click', OursoPhone.on.playerClick);
-          
           
           $playlist.fadeIn(150);
           
@@ -552,24 +490,11 @@
         },
         
         playlistLoaded:  function(playlist) {
-          var $playlist = $("#playlist"), $currentSound, $viewModeControl;
+          var $playlist = $("#playlist"), $currentSound;
           $playlist.fadeOut(150);
           $playlist.html('').attr('data-album-id', playlist.id);
           
           [playlist].forEach( OursoPhone.ui.drawAlbum );
-          
-          $viewModeControl = TemplateStore.get('view-mode-control');
-          $($viewModeControl).appendTo('#playlist');
-          
-          $('.display-mode-box div').off().on('click', function() {
-            var mode = this.className.split('-')[2];
-            if(mode==='up') {
-              location.href = '#';
-              //onHashChanged();
-              return false;
-            }
-            $('#playlist').attr('data-display-mode', mode);
-          });
           
           playlist.tracks.forEach( OursoPhone.ui.drawTracks );
           
@@ -684,9 +609,8 @@
           if(error!==null) {
             console.warn('Error while loading track', error);
             //$('#player-title').html( error.message );
-            $('#playlist').attr('data-album-id', null).attr('data-song-id', null);
+            $('#playlist').attr('data-album-id', '0').attr('data-song-id', '0');
             location.href = '#';
-            //history.go(-1);
             OursoPhone.utils.interfaceRelease();
             return;
           } else {
@@ -695,9 +619,7 @@
           
           OursoPhone.currentTrack = track;
           OursoPhone.ui.drawTrack(track);
-          
-          //$('#player-title').html( '' /*OursoPhone.utils.htmlEncode(track['title']) */);
-          //$('#player-description').html( '' /*OursoPhone.utils.htmlEncode(track['description']) */);
+
           $('#playlist').attr('data-song-id', OursoPhone.currentTrack.id);
           
           $('trackbox').removeClass('active');
@@ -803,7 +725,6 @@
         
         tagInserted: function() {
           $('tag').off().on('click', function() {
-            // console.log($(this).text());
             var cleanStr = $(this).text().replace(/[^a-z0-9 ]+/gi, '');
             if(cleanStr!='') {
               cleanStr = cleanStr.toLowerCase();
@@ -817,6 +738,19 @@
       ui: {
         
         init: function() {
+          // inject the view controls
+          var $viewModeControl = TemplateStore.get('view-mode-control');
+          $($viewModeControl).appendTo('#controls');
+          
+          $('.display-mode-box div').off().on('click', function() {
+            var mode = this.className.split('-')[2];
+            if(mode==='up') {
+              location.href = '#';
+              return false;
+            }
+            $('#playlist').attr('data-display-mode', mode);
+          });
+          
           // Get the canvas & its context, width, and height.
           $('#canvas-overlay').on('mousedown', function(evt) {
             var pos = (evt.pageX - $(this).offset().left) / $(this).width();
@@ -861,7 +795,6 @@
           $('#un-mute').on('click', function() {
             OursoPhone.config.showComments = this.checked;
           });
-          
           $('#un-mute').attr('checked', OursoPhone.config.showComments);
           
           $('.volume-control label').on('click', function() {
@@ -871,9 +804,7 @@
             var minVolume     = 0- -$volumeControl.prop('min');
             var step          = 0- -$volumeControl.prop('step');
             var newVolume;
-            
-            //console.log(currentVolume, maxVolume, minVolume, step);
-            
+           
             switch( $(this).attr('data-volume-action') ) {
               case '+':
                 if( ( currentVolume + step ) <= maxVolume ) {
@@ -887,7 +818,6 @@
                 break;
             }
             if(newVolume!==undefined) {
-              //console.log('new volume', newVolume);
               $volumeControl.val(newVolume).trigger('change');
             }
           });
@@ -921,8 +851,7 @@
               [album.artwork_url]
             );
           } else {
-            //$albumpicture = TemplateStore.get('album-no-picture');
-            $albumpicture = '<img src="'+OursoPhone.pixelTrans +'" />';//TemplateStore.get('track-no-picture');
+            $albumpicture = '<img src="'+OursoPhone.pixelTrans +'" />';
           }
           if(album.tag_list=='') {
             albumTagList = '';
@@ -1259,7 +1188,6 @@
               $('.waveform-holder').toggleClass('contracted');
             });
           }
-          
           
         }
       }

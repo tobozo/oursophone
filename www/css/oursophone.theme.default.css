@@ -93,6 +93,11 @@
           transform: scale(1, 2);
 }
 
+
+#controls .display-mode-box {
+  margin-left: 2em;
+}
+
 #player-state {
   left:auto;
   right:0;

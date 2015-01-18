@@ -104,6 +104,7 @@
           if (args[1] != $('#playlist').attr('data-user')) {
             // different album, probably got here using a permalink, load tracks data into playlist
             OursoPhone.utils.interfaceLock();
+            $('#playlist').attr('data-user', args[1]);
             SC.get('/users/' + args[1], OursoPhone.ui.drawUser);
             SC.get('/users/' + args[1] + '/tracks', OursoPhone.on.trackListLoaded);
           }

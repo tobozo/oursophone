@@ -7,6 +7,7 @@
         CORSRelay: false,   /* Priv.  : changing this has no effect */
         autoplay: true,     /* BOOL   : will automatically play the next song in the current album/taglist */
         theme: 'default',   /* STRING : must be in /css folder and named oursophone.theme.[string].css */
+        showComments: false, /* BOOL   : will display comments while playing songs */
         isInWebView: !!window._cordovaNative,
         gestureLoaded: false, /* Priv.: will be set when library is loaded */
         thumbs: {
@@ -154,8 +155,11 @@
       },
       
       start: function() {
+        var indexHTML;
         TemplateStore.init();
-        $( TemplateStore.get('index') ).appendTo('body');
+        indexHTML = TemplateStore.get('index');
+        indexHTML = indexHTML.replace("{pixel-trans}", OursoPhone.pixelTrans, 'gi');
+        $(indexHTML).appendTo('body');
         window.onhashchange = OursoPhone.onRouteChanged;
         OursoPhone.onRouteChanged();
         OursoPhone.ui.init();
@@ -304,10 +308,12 @@
         
         next: function() {
           var tracks = $('#playlist .track trackbox'),
-          currentTrack = $('#playlist').attr('data-song-id'),
-          nextTrackHash = false,
-          album_id,
-          track_id;
+            $playlist = $('#playlist'),
+            currentTrack = $playlist.attr('data-song-id'),
+            nextTrackHash = false,
+            album_id,
+            track_id
+          ;
           
           if(!tracks.length) {
             OursoPhone.utils.interfaceRelease();
@@ -319,24 +325,24 @@
             var linkType = '';
             var linkVal = '';
             
-            if( $('#playlist').attr('data-tag-id')!=0 ) {
+            if( $playlist.attr('data-tag-id') !=0 ) {
               linkType = 'tag';
-              linkVal  = $("#playlist").attr('data-tag-id')
+              linkVal  = $playlist.attr('data-tag-id')
             } else {
-              if($('#playlist').attr('data-user')!='') {
+              if($('#playlist').attr('data-user') !='' ) {
                 linkType = 'user';
-                linkVal  = $('#playlist').attr('data-user');
+                linkVal  = $playlist.attr('data-user');
               } else {
                 linkType = 'album';
-                linkVal  = $("#playlist").attr('data-album-id');
+                linkVal  = $playlist.attr('data-album-id');
               }
             }
             
             if( $(this).attr('data-id') == currentTrack ) {
               if( trackIndex+1 < tracks.length ) {
-                album_id = $('#playlist').attr('data-album-id');
+                //album_id = $('#playlist').attr('data-album-id');
                 track_id = $(tracks[trackIndex+1]).attr('data-id');
-                if(album_id===undefined) return;
+                //if(album_id===undefined) return;
                 if(track_id===undefined || track_id===null) return;
                 nextTrackHash = '#'+linkType+':' + linkVal + ':track:' + $(tracks[trackIndex+1]).attr('data-id');
               }
@@ -852,6 +858,12 @@
             return false;
           });
           
+          $('#un-mute').on('click', function() {
+            OursoPhone.config.showComments = this.checked;
+          });
+          
+          $('#un-mute').attr('checked', OursoPhone.config.showComments);
+          
           $('.volume-control label').on('click', function() {
             var $volumeControl = $('[data-action="setvolume"]');
             var currentVolume = 0- -$volumeControl.val();
@@ -1117,6 +1129,10 @@
           var userComment, blockComment, userAvatar, userLink;
           var text = "";
           var $comments = $('#comments');
+          
+          if(!OursoPhone.config.showComments){
+            return;
+          }
           
           userAvatar = $('<img class="user-avatarimg" />').attr({
             'src': firstComment.user.avatar_url,

@@ -18,6 +18,15 @@
         <input type="range" data-action="setvolume" min="0" max="1" step="0.1" />
         <label class="plus-button" data-volume-action="+">+</label>
       </div>
+      <div class="comments-control">
+        <input type="checkbox" name="un-mute" id="un-mute" checked>
+        <label for="un-mute" class="unmute">
+          <img src="{pixel-trans}" class="mute-icon" alt="Mute_Icon.svg" title="Mute icon">
+        </label>
+        <label for="un-mute" class="mute">
+          <img src="{pixel-trans}" class="speak-icon" alt="Speaker_Icon.svg" title="Unmute/speaker icon">
+        </label>
+      </div>
       <div id="player-state"></div>
     </div>
     <div id="user-description"></div>

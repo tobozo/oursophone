@@ -1,5 +1,9 @@
 # OursoPhone Demo
 
+<p align="center">
+  <img src="/www/res/icon/android/icon-96-xhdpi.png?raw=true" title="OursoPhone" />
+</p>
+
 Static Demo: http://assassine.org/oursophone.html (waveform disabled)
 
 

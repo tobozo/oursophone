@@ -54,9 +54,27 @@
           Route.list.user(args);
         },
         user: function(args) {
+          var  userInCache = OursoPhone.userCache.find(args[1]),
+             tracksInCache = OursoPhone.trackListCache.find({id: args[1]});
+             
           $('#playlist').attr('data-user', args[1]);
-          SC.get('/users/' + args[1], OursoPhone.ui.drawUser);
-          SC.get('/users/' + args[1] + '/tracks', OursoPhone.on.trackListLoaded);
+
+          if( userInCache ) {
+            //console.log('route user in cache');
+            OursoPhone.ui.drawUser( userInCache );
+          } else {
+            //console.log('route user NOT in cache');
+            SC.get('/users/'+ args[1], OursoPhone.ui.drawUser);
+          }
+          
+          if( tracksInCache ) {
+            //console.info('route tracklist in cache');
+            OursoPhone.on.trackListLoaded( tracksInCache );
+          } else {
+            //console.log('route tracklist NOT in cache');
+            SC.get('/users/' + args[1] + '/tracks', OursoPhone.on.trackListLoaded);  
+          }
+
         }        
       },
       play: {
@@ -78,7 +96,7 @@
               Route.play.tag(args);
               break;
             case 'user':
-              Route.play.user(args);
+              Route.list.user(args);
           }
           
           // check if the requested song is not already playing
@@ -97,19 +115,6 @@
             SC.get('/playlists/' + args[1], OursoPhone.on.playlistLoaded);
           }
         },
-
-        user: function(args) { 
-          //$('#playlist').attr('data-tag-id', 0);
-          // current tracklist or other tracklist ?
-          if (args[1] != $('#playlist').attr('data-user')) {
-            // different album, probably got here using a permalink, load tracks data into playlist
-            OursoPhone.utils.interfaceLock();
-            $('#playlist').attr('data-user', args[1]);
-            SC.get('/users/' + args[1], OursoPhone.ui.drawUser);
-            SC.get('/users/' + args[1] + '/tracks', OursoPhone.on.trackListLoaded);
-          }
-        },
-        
         tag: function(args) {  
           if (args[1] != $('#playlist').attr('data-tag-id')) {
             $('#playlist').attr('data-tag-id', args[1]);

@@ -20,6 +20,40 @@
       currentPlayer: undefined, /* shortcut to the SoundManager instance */
       currentTrack: undefined, /* shortcut to the track playing */
       graphUpdater: undefined, /* animationFrame used to update the graph */
+      userCache: {
+        /* TODO: persistent data store */
+        byid: { },
+        byusername: { },
+        bypermalink: { },
+        store: function(user) {
+          ['id', 'username', 'permalink'].forEach(function(prop) {
+            // TODO: find better than using property name as search criteria
+            var ucprop   = 'by' + prop;
+            var propname = user[prop];
+            if(propname) {
+              OursoPhone.userCache[ucprop][propname] = user;
+            }
+          });
+        },
+        find: function(criteria) {
+          if( OursoPhone.userCache.byid[criteria] ) return OursoPhone.userCache.byid[criteria];
+          if( OursoPhone.userCache.byusername[criteria] ) return OursoPhone.userCache.byusername[criteria];
+          if( OursoPhone.userCache.bypermalink[criteria] ) return OursoPhone.userCache.bypermalink[criteria];
+        }
+      },
+      trackListCache: {
+        /* TODO: persistent data store */
+        byuser: { },
+        byalbum: { },
+        store: function(tracklist) {
+          //console.log('will store tracklist', {tracklist:tracklist});
+          OursoPhone.trackListCache.byuser[ tracklist[0].user.id ] = tracklist;
+        },
+        find: function(user) {
+          //console.log('trackListCache searching for', user, user.id);
+          return OursoPhone.trackListCache.byuser[ user.id ]; 
+        }
+      },
       waveformData: undefined, 
       waveformWidth: undefined,
       pixelTrans:"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
@@ -36,7 +70,7 @@
       
       init: function(options) {
         if(options) {
-          console.log('merging', OursoPhone.config, options);
+          console.log('merging options', OursoPhone.config, options);
           OursoPhone.config = $.extend(OursoPhone.config, options); // Overwrite settings
         }
         
@@ -100,7 +134,7 @@
           req.open('GET', document.location.pathname, false);
           req.send(null);
           var headers = req.getAllResponseHeaders().toLowerCase();
-          console.log(headers);
+          //console.log(headers);
           // assume the relay is php
           return !!/ruby/i.test(headers);
         }
@@ -158,8 +192,10 @@
       start: function() {
         var indexHTML;
         TemplateStore.init();
-        indexHTML = TemplateStore.get('index');
-        indexHTML = indexHTML.replace("{pixel-trans}", OursoPhone.pixelTrans, 'gi');
+        indexHTML = TemplateStore.get('index').replaceArray(
+          ["{pixel-trans}"], 
+          [OursoPhone.pixelTrans]
+        );
         $(indexHTML).appendTo('body');
         window.onhashchange = OursoPhone.onRouteChanged;
         OursoPhone.onRouteChanged();
@@ -498,6 +534,9 @@
 
         trackListLoaded: function(tracks) {
           var $playlist = $("#playlist");
+          
+          OursoPhone.trackListCache.store(tracks);
+          
           $playlist.fadeOut(150);
           $playlist.html('').attr('data-album-id', 0).attr('data-display-mode', 'list');
           
@@ -535,7 +574,12 @@
           $playlist.fadeIn(150);
           
           if( $('#user-description .user-id').text() != playlist.user.id ) {
-            SC.get('/users/'+playlist.user.id, OursoPhone.ui.drawUser); 
+            var userInCache = OursoPhone.userCache.find(track.user.id);
+            if( userInCache ) {
+              OursoPhone.ui.drawUser( userInCache );
+            } else {
+              SC.get('/users/'+track.user.id, OursoPhone.ui.drawUser);
+            }
           }
           
           $currentSound = $('trackbox[data-index="'+ $playlist.attr('data-song-id') +'"]');
@@ -625,14 +669,20 @@
             // play next song
           } else {
             // song ended
+            // TODO : autoplay first song of the next album/tracklist/taglist
           }
         },
         
         trackInfo: function(track, error) {
           var url, urlImg, urlData,
               currentPlayer = OursoPhone.player.getCurrent(),
-              $img, imageObj;
+              $canvasOverlay, $img, imageObj, userInCache,
+              onTimedComments = null;
           
+          if(OursoPhone.config.showComments){
+            onTimedComments = OursoPhone.ui.drawComment;
+          }
+              
           if(error!==null) {
             console.warn('Error while loading track', error);
             //$('#player-title').html( error.message );
@@ -661,7 +711,7 @@
             usePeakData: true,
             useWaveformData: true,
             useEQData: true,
-            ontimedcomments: OursoPhone.ui.drawComment,
+            ontimedcomments: onTimedComments,
             onloadedmetadata: function(data) {
               console.log('loaded metadata', this, data);
             },
@@ -702,9 +752,26 @@
           // urlImg  = track.waveform_url.replace('http://', '');
           // urlImg  = track.waveform_url.replace('https://', '');
           
-          SC.get('/users/'+track.user.id, OursoPhone.ui.drawUser);
+          userInCache = OursoPhone.userCache.find(track.user.id);
           
-          $img = $('<img class="waveform-img" />');
+          if( userInCache ) {
+            OursoPhone.ui.drawUser( userInCache );
+          } else {
+            //console.log('user not in cache', track.user.id);
+            SC.get('/users/'+track.user.id, OursoPhone.ui.drawUser);
+          }
+          
+          $canvasOverlay = $('#canvas-overlay');
+          
+          $img = $canvasOverlay.find('img');
+          
+          if($img.length<=0) {
+            $img = $('<img class="waveform-img" />');
+            $canvasOverlay.append($img);
+            //console.log('appended overlay');
+          } else {
+            //console.log('reusing overlay'); 
+          }
           
           $img.on('error', function() {
             // transparent pixel
@@ -716,7 +783,7 @@
           });
           
           $img.attr('src', track.waveform_url);
-          $('#canvas-overlay').empty().append($img);
+          //$('#canvas-overlay').empty().append($img);
           
           if(OursoPhone.config.isInWebView) {
             // enable waveform animated plugin
@@ -746,7 +813,7 @@
         userResolved: function(user) {
           if(user.id) {
             OursoPhone.config.scUSerID = user.id;
-            location.href = '#';
+            location.href = '#user:' + user.id;
           }
         },
         
@@ -769,7 +836,7 @@
           var $viewModeControl = TemplateStore.get('view-mode-control');
           $($viewModeControl).appendTo('#controls');
           
-          $('.display-mode-box div').off().on('click', function() {
+          $('.display-mode-box div').off().on('click', function(e) {
             
             if( OursoPhone.config.isFeedbackEnabled ) {
               OursoPhone.ui.vibrate(e); 
@@ -800,7 +867,7 @@
           $('.search-button').on('click', function() {
             var user;
             if(user = prompt('Load playlist from user : ')) {
-              OursoPhone.ui.resolveUser(user, OursoPhone.on.userResolved)
+              OursoPhone.ui.resolveUser(user)
             }
           });
           
@@ -836,7 +903,7 @@
             return false;
           });
           
-          $('#un-mute').on('click', function() {
+          $('#un-mute').on('click', function(e) {
             if( OursoPhone.config.isFeedbackEnabled ) {
               OursoPhone.ui.vibrate(e); 
             }
@@ -844,7 +911,7 @@
           });
           $('#un-mute').attr('checked', OursoPhone.config.showComments);
           
-          $('.volume-control label').on('click', function() {
+          $('.volume-control label').on('click', function(e) {
             if( OursoPhone.config.isFeedbackEnabled ) {
               OursoPhone.ui.vibrate(e); 
             }
@@ -1158,12 +1225,12 @@
           });
           
           userAvatar.appendTo(userLink);
-          console.log(firstComment.user);
-          userLink.on('click', function() {
+          //console.log(firstComment.user);
+          userLink.on('click', function(e) {
             if( OursoPhone.config.isFeedbackEnabled ) {
               OursoPhone.ui.vibrate(e); 
             }
-            OursoPhone.ui.resolveUser(firstComment.user.id, OursoPhone.on.userResolved)
+            OursoPhone.ui.resolveUser(firstComment.user.id)
             return false;
           });
           
@@ -1175,39 +1242,79 @@
           }
           $comments.stop(true, true).animate({scrollTop: $comments.prop("scrollHeight")}, 300);
         },
+
+        handleResolvedUser: function(user, error) {
+          if(error) {
+            console.log('HTTP Error', error);
+            alert("User not found");
+          } else {
+            if(user.id) {
+              OursoPhone.userCache.store(user);
+              OursoPhone.on.userResolved(user);
+            } else {
+              console.warn('handleResolvedUser: nothing found');
+            }
+          }
+        },
+        handleResolveError: function(response) {
+          if(response.errors) {
+            console.warn("HTTP Error while resolving user: user does not exists", response.errors);
+            alert("User not found");
+          } else {
+            if(response.length>0) {
+              // TODO : cache tracklist
+              OursoPhone.currentTrackList = response;
+
+              OursoPhone.trackListCache.store(response);
+              
+              $('#playlist').attr('data-tag-id', 0);
+              $('#playlist').attr('data-album-id', 0);
+              $('#playlist').attr('data-user', response[0].user_id);
+              OursoPhone.on.userResolved({id:response[0].user_id});
+            } else {
+              console.warn("User has an empty track list"); 
+            }
+          }
+        },
         
         resolveUser: function(searchStr, callback) {
-          var handleResolvedUser = function(user, error) {
-            if(error) {
-              console.log('HTTP Error', error);
-            } else {
-              if(user.id) {
-                callback(user);
-              } else {
-                console.log('nothing found');
-              }
+          var tracksInCache = false,
+                userInCache = OursoPhone.userCache.find( searchStr );
+                
+          if( userInCache ) {
+            //console.info('user is in cache');
+            tracksIncache = OursoPhone.trackListCache.find( userInCache );
+
+            if( tracksIncache ) {
+              //console.info('using cached user tracklist');
+              $('#playlist').attr('data-tag-id', 0);
+              $('#playlist').attr('data-album-id', 0);
+              $('#playlist').attr('data-user', userInCache.id);
+              OursoPhone.on.trackListLoaded( tracksIncache );
+              return;
             }
           }
           
           if(/^[a-z0-9 _\-]+$/gi.test(searchStr)) {
-            // user ID
-            SC.get('/users/' + searchStr + '/tracks', function(tracks) {
-              if(tracks.length>0) {
-                $('#playlist').attr('data-tag-id', 0);
-                $('#playlist').attr('data-album-id', 0);
-                $('#playlist').attr('data-user', searchStr);
-                OursoPhone.on.trackListLoaded(tracks);
-              }
-            });
+            // user ID or permalink
+            //console.log('will get uncached user tracklist from', searchStr);
+            SC.get('/users/' + searchStr + '/tracks', {
+              filter:'streamable', 
+              order: 'created_at'
+            }, OursoPhone.ui.handleResolveError);
+
           } else {
-            // user Name
+            // user Name (WARNING XSS IN PROGRESS)
+            console.log('will resolve', searchStr);
+            // pale attempt to convert user data to SoundCloud user permalink
+            // success rate must be very low and give accidental results
             searchStr = searchStr.replace(/ /g, '-');
             SC.get('/resolve', {
               url: 'https://soundcloud.com/' + searchStr
-            }, handleResolvedUser);
+            }, OursoPhone.ui.handleResolvedUser);
             
           }
-          console.log('will resolve', searchStr);
+
 
         },
         
@@ -1216,6 +1323,8 @@
             $userBlock = $('#user-description'),
                 lastY;
           var html = '';
+          
+          OursoPhone.userCache.store( user );
           
           ['id', 'kind', 'full_name', 'permalink_url', 'avatar_url', 'description',
           'website', 'website_title', 'track_count', 'playlist_count', 'followers_count',
@@ -1256,6 +1365,9 @@
           $userBlock.removeClass('contracted').html(html);
           
           if(OursoPhone.config.gestureLoaded) {
+            // this sucks
+            return;
+            
             
             $userBlock.off().on('touchstart', function(e) {
               lastY = e.originalEvent.touches ? e.originalEvent.touches[0].pageY : e.pageY;
@@ -1269,7 +1381,7 @@
                 $('#user-description').addClass('contracted');
               }
             });
-            $userBlock.on('click', function() {
+            $userBlock.on('click', function(e) {
               if( OursoPhone.config.isFeedbackEnabled ) {
                 OursoPhone.ui.vibrate(e); 
               }

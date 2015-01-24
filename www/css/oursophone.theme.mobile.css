@@ -31,6 +31,13 @@
   /*display: none; */
 }
 
+.comments-control {
+  font-size: 5em;
+  position: absolute;
+  right: 1em;
+  top: 1em;
+}
+
 .waveform-holder {
   transition: all 0.3s ease;
   max-height: 1500px;

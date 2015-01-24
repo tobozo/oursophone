@@ -21,10 +21,10 @@
       <div class="comments-control">
         <input type="checkbox" name="un-mute" id="un-mute" checked>
         <label for="un-mute" class="unmute">
-          <img src="{pixel-trans}" class="mute-icon" alt="Mute_Icon.svg" title="Mute icon">
+          <img src="{pixel-trans}" class="mute-icon" alt="Mute_Icon.svg" title="Mute">
         </label>
         <label for="un-mute" class="mute">
-          <img src="{pixel-trans}" class="speak-icon" alt="Speaker_Icon.svg" title="Unmute/speaker icon">
+          <img src="{pixel-trans}" class="speak-icon" alt="Speaker_Icon.svg" title="Unmute (takes effect with the next song)">
         </label>
       </div>
       <div id="player-state"></div>

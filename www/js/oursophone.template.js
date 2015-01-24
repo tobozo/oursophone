@@ -28,15 +28,19 @@
         if(TemplateStore.store[id]!==undefined) {
           return TemplateStore.store[id];
         }
+        
         $tpl = document.querySelector('#'+id);
         
-        TemplateStore.store[id] = $tpl.innerHTML;
-        
         if($tpl) {
+          TemplateStore.store[id] = $tpl.innerHTML;
           $tpl.parentElement.removeChild($tpl);
+          return TemplateStore.store[id];
+        } else {
+          console.warn("no such tpl, use TemplateStore::load() first");
+          // silently fail by returning an empty string
+          return "";
         }
-        
-        return TemplateStore.store[id];
+
       },
       load: function(id, callback) {
         var tplUrl = TemplateStore.config.folder + id + '.' + TemplateStore.config.extension;

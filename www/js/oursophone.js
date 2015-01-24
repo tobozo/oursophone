@@ -364,45 +364,58 @@
         },
         
         next: function() {
-          var tracks = $('#playlist .track trackbox'),
-            $playlist = $('#playlist'),
-            currentTrack = $playlist.attr('data-song-id'),
+          var $playlist,
+            playlistProps,
+            currentTrack,
             nextTrackHash = false,
             album_id,
             track_id
           ;
           
-          if(!tracks.length) {
+          if(!OursoPhone.currentTrackList.length) {
             OursoPhone.utils.interfaceRelease();
             return;      
           }
           
-          $(tracks).each(function(trackIndex) {
-            
+          $playlist = $('#playlist');
+          
+          playlistProps = {
+            tag: $playlist.attr('data-tag-id'),
+            user: $playlist.attr('data-user'),
+            album: $playlist.attr('data-album-id')
+          };
+          
+          currentTrack = $playlist.attr('data-song-id');
+          
+          OursoPhone.currentTrackList.forEach(function(track, trackIndex) {
+
             var linkType = '';
             var linkVal = '';
             
-            if( $playlist.attr('data-tag-id') !=0 ) {
+            if( playlistProps.tag !=0 ) {
               linkType = 'tag';
-              linkVal  = $playlist.attr('data-tag-id')
+              linkVal  = playlistProps.tag;
             } else {
-              if($('#playlist').attr('data-user') !='' ) {
+              if( playlistProps.user !='' ) {
                 linkType = 'user';
-                linkVal  = $playlist.attr('data-user');
+                linkVal  = playlistProps.user;
               } else {
                 linkType = 'album';
-                linkVal  = $playlist.attr('data-album-id');
+                linkVal  = playlistProps.album;
               }
             }
             
-            if( $(this).attr('data-id') == currentTrack ) {
-              if( trackIndex+1 < tracks.length ) {
-                track_id = $(tracks[trackIndex+1]).attr('data-id');
-                if(track_id===undefined || track_id===null) return;
-                nextTrackHash = '#'+linkType+':' + linkVal + ':track:' + $(tracks[trackIndex+1]).attr('data-id');
+            if(track.id == currentTrack) {
+              if( trackIndex+1 < OursoPhone.currentTrackList.length ) {
+                if(  OursoPhone.currentTrackList[trackIndex+1].id !== undefined 
+                  && OursoPhone.currentTrackList[trackIndex+1].id !==null) {
+                  nextTrackHash = '#'+linkType+':' + linkVal + ':track:' + OursoPhone.currentTrackList[trackIndex+1].id;   
+                }
               }
             }
+           
           });
+          
           if(nextTrackHash) {
             location.href = nextTrackHash;
           } else {
@@ -411,46 +424,58 @@
         },
         
         prev: function() {
-          var tracks = $('#playlist .track trackbox'),
-          currentTrack = $('#playlist').attr('data-song-id'),
-          prevTrackHash = false,
-          album_id,
-          track_id;
+          var $playlist,
+            playlistProps,
+            currentTrack,
+            nextTrackHash = false,
+            album_id,
+            track_id
+          ;
           
-          if(!tracks.length) {
+          if(!OursoPhone.currentTrackList.length) {
             OursoPhone.utils.interfaceRelease();
             return;      
           }
           
-          $(tracks).each(function(trackIndex) {
+          $playlist = $('#playlist');
+          
+          playlistProps = {
+            tag: $playlist.attr('data-tag-id'),
+            user: $playlist.attr('data-user'),
+            album: $playlist.attr('data-album-id')
+          };
+          
+          currentTrack = $playlist.attr('data-song-id');
+          
+          OursoPhone.currentTrackList.forEach(function(track, trackIndex) {
             
             var linkType = '';
             var linkVal = '';
             
-            if( $('#playlist').attr('data-tag-id')!=0 ) {
+            if( playlistProps.tag !=0 ) {
               linkType = 'tag';
-              linkVal = $("#playlist").attr('data-tag-id')
+              linkVal  = playlistProps.tag;
             } else {
-              if( $('#playlist').attr('data-user')!='' ) {
+              if( playlistProps.user !='' ) {
                 linkType = 'user';
-                linkVal = $("#playlist").attr('data-user');
+                linkVal  = playlistProps.user;
               } else {
                 linkType = 'album';
-                linkVal = $("#playlist").attr('data-album-id');
+                linkVal  = playlistProps.album;
               }
             }
             
-            if( $(this).attr('data-id') == currentTrack ) {
+            if(track.id == currentTrack) {
               if( trackIndex-1 >= 0 ) {
-                album_id = $('#playlist').attr('data-album-id');
-                track_id = $(tracks[trackIndex-1]).attr('data-id');
-                if(album_id===undefined) return;
-                         if(track_id===undefined || track_id===null) return;
-                         prevTrackHash = '#'+linkType+':' + linkVal
-                         + ':track:' + $(tracks[trackIndex-1]).attr('data-id');
+                if(  OursoPhone.currentTrackList[trackIndex-1].id !== undefined 
+                  && OursoPhone.currentTrackList[trackIndex-1].id !==null) {
+                  prevTrackHash = '#'+linkType+':' + linkVal + ':track:' + OursoPhone.currentTrackList[trackIndex-1].id;   
+                }
               }
             }
+            
           });
+
           if(prevTrackHash) {
             location.href = prevTrackHash;
           } else {
@@ -536,6 +561,9 @@
 
         tagListLoaded: function(tracks) {
           var $playlist = $("#playlist");
+          
+          OursoPhone.currentTrackList = tracks;
+          
           $playlist.fadeOut(150);
           $playlist.html('').attr('data-album-id', 0).attr('data-display-mode', 'list');
           
@@ -557,6 +585,7 @@
         trackListLoaded: function(tracks) {
           var $playlist = $("#playlist");
           
+          OursoPhone.currentTrackList = tracks;
           OursoPhone.trackListCache.store(tracks);
           
           $playlist.fadeOut(150);
@@ -581,6 +610,8 @@
           var $playlist = $("#playlist"), $currentSound;
           $playlist.fadeOut(150);
           $playlist.html('').attr('data-album-id', playlist.id);
+          
+          OursoPhone.currentTrackList = playlist.tracks;
           
           [playlist].forEach( OursoPhone.ui.drawAlbum );
           
@@ -894,34 +925,48 @@
           });
           
           $('input[data-action="setvolume"]').on('change', function() {
-            OursoPhone.player.setVolume( $(this).val()*100 );
+            var thisVal = $(this).val();
+            OursoPhone.config.currentVolume = thisVal;
+            OursoPhone.player.setVolume( thisVal*100 );
+            if( OursoPhone.localStorage ) {
+              console.log('saving config');
+              localStorage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) ); 
+            }
           });
           
+          if( OursoPhone.config.currentVolume ) {
+            $('input[data-action="setvolume"]').val( OursoPhone.config.currentVolume );
+          }
+          
+          
           $('#controls .player-button').on('click', function(e) {
+            var that = $(this);
             
             if( OursoPhone.config.isFeedbackEnabled ) {
               OursoPhone.ui.vibrate(e); 
             }
             
-            OursoPhone.ui.touchRipple(e, this, $(this).find('span') );
+            OursoPhone.ui.touchRipple(e, this, $(this).find('span'), function() {
+              OursoPhone.utils.interfaceLock();
+              
+              switch(that.attr('data-action')) {
+                case 'play':
+                  OursoPhone.player.play();
+                  break;
+                case 'pause':
+                  OursoPhone.player.pause();
+                  break;
+                case 'backward':
+                  OursoPhone.player.prev();
+                  break;
+                case 'forward':
+                  OursoPhone.player.next()
+                  break;
+              }
+              
+            });
             
             e.preventDefault();
-            OursoPhone.utils.interfaceLock();
-            var that = $(this);
-            switch(that.attr('data-action')) {
-              case 'play':
-                OursoPhone.player.play();
-                break;
-              case 'pause':
-                OursoPhone.player.pause();
-                break;
-              case 'backward':
-                OursoPhone.player.prev();
-                break;
-              case 'forward':
-                OursoPhone.player.next()
-                break;
-            }
             return false;
           });
           
@@ -970,9 +1015,9 @@
           }, 500);
         },
         
-        touchRipple: function(e, source, target) {
+        touchRipple: function(e, source, target, callback) {
           
-          var svgCircle
+          var svgCircle;
           var x = e.pageX;
           var y = e.pageY;
           var clickY = y - $(source).offset().top;
@@ -984,20 +1029,22 @@
           
           target.append('<svg><circle cx="'+setX+'" cy="'+setY+'" r="'+0+'"></circle></svg>');
           
-          svgCircle = $(source).find("circle");
+          svgCircle = $(target).find("circle");
           
           svgCircle.animate({
             "r" : $(source).outerWidth()
           },{
             //easing: "easeOut",
-            duration: 400,
+            duration: 300,
             step : function(val){
               svgCircle.attr("r", val);
             },
             complete: function() {
-              setTimeout(function() {
-                $(source).find("svg").remove();                    
-              }, 100);
+              svgCircle.attr("r", 0);
+              $(source).find("svg").remove();                    
+              if(callback) {
+                callback();
+              }
             }
           });
         },

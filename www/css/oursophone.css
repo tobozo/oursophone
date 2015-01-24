@@ -658,6 +658,11 @@ display: none;
   position:relative;
 }
 
+#controls span {
+  position: relative;
+}
+
+
 #controls [data-action="play"] span {
   background-color: #bbb;
 }
@@ -803,6 +808,20 @@ width:50%;
   transition: all 0.3s linear;
   /*animation: borderswitcher 1s infinite;*/
 }
+
+
+
+svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+circle {
+  fill: rgba(255,0,0,0.1);
+}
+
 
 
 @-webkit-keyframes scroller {

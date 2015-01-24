@@ -9,7 +9,7 @@ module.exports = (grunt) ->
         root: 'www'
         cordova: '.cordova'
         name: '<%= pkg.name %>'
-        plugins: ['https://github.com/simplec-dev/AndroidMediaGestureSetting.git', 'org.apache.cordova.file-transfer', 'com.cmpsoft.mobile.plugin.download']
+        plugins: ['https://github.com/simplec-dev/AndroidMediaGestureSetting.git', 'org.apache.cordova.file-transfer', 'com.cmpsoft.mobile.plugin.download', 'https://github.com/vvelda/device-feedback.git']
         platforms: ['android']
         config:
           template: '_config.xml'

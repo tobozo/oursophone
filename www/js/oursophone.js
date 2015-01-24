@@ -9,6 +9,7 @@
         theme: 'default',   /* STRING : must be in /css folder and named oursophone.theme.[string].css */
         showComments: false, /* BOOL   : will display comments while playing songs */
         isInWebView: !!window._cordovaNative,
+        isFeedbackEnabled: false, /* BOOL : can use haptic feecback */
         gestureLoaded: false, /* Priv.: will be set when library is loaded */
         thumbs: {
           autoresize: true, /* BOOL : enable dynamic thumbs resize on document load/resize */
@@ -39,10 +40,32 @@
           OursoPhone.config = $.extend(OursoPhone.config, options); // Overwrite settings
         }
         
+        // enable vibration support
+        navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
+        
+        if (navigator.vibrate) {
+          // vibration API supported
+          OursoPhone.config.isFeedbackEnabled = true;
+          // use HTML5 vibration API
+          OursoPhone.ui.vibrate = function() {
+            navigator.vibrate(100);
+          }
+        }
+        
         if(OursoPhone.config.isInWebView) {
           OursoPhone.config.thumbs.autoresize = false;
           OursoPhone.config.theme = 'mobile';
           OursoPhone.config.gestureLoaded = true;
+          
+          OursoPhone.config.isFeedbackEnabled = function() { 
+            /* check for Cordova device-feedback plugin existence */
+            return !!window.plugins && window.plugins.deviceFeedback; 
+          };
+          
+          OursoPhone.ui.vibrate = function(e) {
+            DF = window.plugins.deviceFeedback;
+            DF.haptic(DF.VIRTUAL_KEY);
+          }
           
         } else {
           if(OursoPhone.config.thumbs.autoresize) {
@@ -81,7 +104,6 @@
           // assume the relay is php
           return !!/ruby/i.test(headers);
         }
-        
         
         if(hasPhp()) {
           // enable waveform animated plugin
@@ -440,7 +462,12 @@
       
       on: {
         
-        playerClick: function() {
+        playerClick: function(e) {
+          
+          if( OursoPhone.config.isFeedbackEnabled ) {
+            OursoPhone.ui.vibrate(e); 
+          }
+          
           if($(this).attr('data-href')!='') {
             if(location.hash!=$(this).attr('data-href')) {
               location.href = $(this).attr('data-href');
@@ -743,6 +770,11 @@
           $($viewModeControl).appendTo('#controls');
           
           $('.display-mode-box div').off().on('click', function() {
+            
+            if( OursoPhone.config.isFeedbackEnabled ) {
+              OursoPhone.ui.vibrate(e); 
+            }
+            
             var mode = this.className.split('-')[2];
             if(mode==='up') {
               location.href = '#';
@@ -753,6 +785,11 @@
           
           // Get the canvas & its context, width, and height.
           $('#canvas-overlay').on('mousedown', function(evt) {
+            
+            if( OursoPhone.config.isFeedbackEnabled ) {
+              OursoPhone.ui.vibrate(evt); 
+            }
+            
             var pos = (evt.pageX - $(this).offset().left) / $(this).width();
             var currentPlayer = OursoPhone.player.getCurrent();
             var currentduration = currentPlayer.duration;
@@ -771,8 +808,15 @@
             OursoPhone.player.setVolume( $(this).val()*100 );
           });
           
-          $('#controls .player-button').on('click', function(evt) {
-            evt.preventDefault();
+          $('#controls .player-button').on('click', function(e) {
+            
+            if( OursoPhone.config.isFeedbackEnabled ) {
+              OursoPhone.ui.vibrate(e); 
+            }
+            
+            OursoPhone.ui.touchRipple(e, this, $(this).find('span') );
+            
+            e.preventDefault();
             OursoPhone.utils.interfaceLock();
             var that = $(this);
             switch(that.attr('data-action')) {
@@ -793,11 +837,18 @@
           });
           
           $('#un-mute').on('click', function() {
+            if( OursoPhone.config.isFeedbackEnabled ) {
+              OursoPhone.ui.vibrate(e); 
+            }
             OursoPhone.config.showComments = this.checked;
           });
           $('#un-mute').attr('checked', OursoPhone.config.showComments);
           
           $('.volume-control label').on('click', function() {
+            if( OursoPhone.config.isFeedbackEnabled ) {
+              OursoPhone.ui.vibrate(e); 
+            }
+            
             var $volumeControl = $('[data-action="setvolume"]');
             var currentVolume = 0- -$volumeControl.val();
             var maxVolume     = 0- -$volumeControl.prop('max');
@@ -824,6 +875,38 @@
           setTimeout(function() {
             OursoPhone.calcThumbsSize();
           }, 500);
+        },
+        
+        touchRipple: function(e, source, target) {
+          
+          var svgCircle
+          var x = e.pageX;
+          var y = e.pageY;
+          var clickY = y - $(source).offset().top;
+          var clickX = x - $(source).offset().left;
+          //var box = source;
+          
+          var setX = parseInt(clickX);
+          var setY = parseInt(clickY);
+          
+          target.append('<svg><circle cx="'+setX+'" cy="'+setY+'" r="'+0+'"></circle></svg>');
+          
+          svgCircle = $(source).find("circle");
+          
+          svgCircle.animate({
+            "r" : $(source).outerWidth()
+          },{
+            //easing: "easeOut",
+            duration: 400,
+            step : function(val){
+              svgCircle.attr("r", val);
+            },
+            complete: function() {
+              setTimeout(function() {
+                $(source).find("svg").remove();                    
+              }, 100);
+            }
+          });
         },
         
         drawAlbum: function(album) {
@@ -1077,6 +1160,9 @@
           userAvatar.appendTo(userLink);
           console.log(firstComment.user);
           userLink.on('click', function() {
+            if( OursoPhone.config.isFeedbackEnabled ) {
+              OursoPhone.ui.vibrate(e); 
+            }
             OursoPhone.ui.resolveUser(firstComment.user.id, OursoPhone.on.userResolved)
             return false;
           });
@@ -1184,6 +1270,9 @@
               }
             });
             $userBlock.on('click', function() {
+              if( OursoPhone.config.isFeedbackEnabled ) {
+                OursoPhone.ui.vibrate(e); 
+              }
               console.log('user toggle');
               $('.waveform-holder').toggleClass('contracted');
             });

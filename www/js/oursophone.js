@@ -138,7 +138,7 @@
             replaceString = replaceString.replace(regex, replace[i]);
           }
           return replaceString;
-        };  
+        };
         
         var hasPhp = function() {
           var req = new XMLHttpRequest();
@@ -1352,9 +1352,8 @@
             alert("User not found");
           } else {
             if(response.length>0) {
-              // TODO : cache tracklist
-              OursoPhone.currentTrackList = response;
 
+              OursoPhone.currentTrackList = response;
               OursoPhone.trackListCache.store(response);
               
               $('#playlist').attr('data-tag-id', 0);
@@ -1372,14 +1371,12 @@
                 userInCache = OursoPhone.userCache.find( searchStr );
                 
           if( userInCache ) {
-            //console.info('user is in cache');
             
             if( loadTrackList !== false ) {
 
               tracksIncache = OursoPhone.trackListCache.find( userInCache );
               
               if( tracksIncache ) {
-                //console.info('using cached user tracklist');
                 $('#playlist').attr('data-tag-id', 0);
                 $('#playlist').attr('data-album-id', 0);
                 $('#playlist').attr('data-user', userInCache.id);
@@ -1397,7 +1394,7 @@
           
           if(/^[a-z0-9 _\-]+$/gi.test(searchStr)) {
             // user ID or permalink
-            //console.log('will get uncached user tracklist from', searchStr);
+
             if( loadTrackList !== false ) {
 
               SC.get('/users/' + searchStr + '/tracks', {

@@ -439,7 +439,7 @@ tag {
 }
 
 
-#user-description {
+#user-description, #album-description {
   display:block;
   max-height:150px;
   width:auto;
@@ -587,20 +587,20 @@ marquee {
 }
 
 
-#playlist[data-album-id] .album {
+[data-display-mode="list"] .album {
   display: block;
   height:auto;
 }
-#playlist[data-album-id] .album .album-picture {
+[data-display-mode="list"] .album .album-picture {
   float:left;
 }
 
-#playlist[data-album-id] .album .album-title {
+[data-display-mode="list"] .album .album-title {
   position: relative;
   width: auto;
   overflow:auto;
 }
-#playlist[data-album-id] .album .album-title .album-descspan {
+[data-display-mode="list"] .album .album-title .album-descspan {
   font-size: 12px;
   font-weight: normal;
   line-height: 1.2em;
@@ -609,11 +609,11 @@ marquee {
   text-align: left;
 }
 
-#playlist[data-album-id] .album albumbox {
+[data-display-mode="list"] .album albumbox {
   cursor:default;
 }
 
-#playlist[data-album-id] .album albumbox div span {
+[data-display-mode="list"] .album albumbox div span {
   display:block;
   line-height:1.2em;
   cursor:default;
@@ -622,7 +622,8 @@ marquee {
 
 
 trackbox, albumbox {
-  color: #880000
+  color: #880000;
+  transition: all 0.5s cubic-bezier(0.5, -0.5, 0.5, 1.5) 0s;
 }
 
 #playlist[data-album-id] albumbox.active .album-title .album-descspan,
@@ -803,13 +804,15 @@ canvas#waveform {
 }
 
 
-trackbox {
+[data-display-mode="thumb"] trackbox {
   transform: scale(0.9);
   transform-origin: center center 0;
+  outline: .2em solid lightsalmon;
 }
 
-trackbox.active {
+[data-display-mode="thumb"] trackbox.active {
   transform: scale(1);
+  outline: .2em solid transparent;
   z-index: 2147483647;
 }
 

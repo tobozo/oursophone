@@ -72,6 +72,7 @@
           }
 
           $playlist.attr('data-tag-id', 0);
+          $playlist.attr('data-user', '');
           $playlist.attr('data-album-id', args[1]);
 
           playListInCache = OursoPhone.cache.playList.find( OursoPhone.config.scUserID );

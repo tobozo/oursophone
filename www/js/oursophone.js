@@ -282,7 +282,7 @@
         if( $scrollBarChecker.width()>0 && $('#playlist').width() != $scrollBarChecker.width() ) {
           // scrollbar detected
           wSize = $scrollBarChecker.width();
-          console.log('scrollbar detected', $('#playlist').width() , $scrollBarChecker.width());
+          console.info('autogrow triggered', $('#playlist').width() , $scrollBarChecker.width());
         } else {
           wSize = $('#playlist').width();
         }
@@ -295,13 +295,13 @@
         // but outer containers may have margin/border
         // TODO : find a better way to calculate the width delta
         try {
-          trackMargin = ($('#playlist .track').css('marginLeft').split('px')[0]- -$('#playlist .track').css('marginRight').split('px')[0])
-            - -( $('#playlist .track').outerWidth() - $('#playlist .track img').width() )
+          trackMargin = ($('.track').css('marginLeft').split('px')[0]- -$('.track').css('marginRight').split('px')[0])
+            - -( $('.track').outerWidth() - $('.track img').width() )
           ;
         } catch(e) { ; }
         try {
-          albumMargin = ($('#playlist .album').css('marginLeft').split('px')[0]- -$('#playlist .album').css('marginRight').split('px')[0])
-            - -( $('#playlist .album').outerWidth() - $('#playlist .album img').width() )
+          albumMargin = ($('.album').css('marginLeft').split('px')[0]- -$('.album').css('marginRight').split('px')[0])
+            - -( $('.album').outerWidth() - $('.album img').width() )
           ;
         } catch(e) { ; }
 
@@ -412,6 +412,10 @@
             track_id
           ;
 
+          function first(obj) {
+            for (var a in obj) return a;
+          }
+
           if(!OursoPhone.currentTrackList.length) {
             // TODO : handle loop on single track
             console.warn('current tracklist is empty');
@@ -465,13 +469,17 @@
                       // identify next album and play its first song
                       albumList = OursoPhone.cache.playList.byuser[ OursoPhone.config.scUserID ];
                       albumList.forEach(function(album, index) {
+
+                        var targetAlbum;
+
                         if(album.id == linkVal) {
                           if( index+1 < albumList.length ) {
                             // next album, first song
                             nextTrackHash = '#'+linkType+':' + albumList[index+1].id + ':track:' + albumList[index+1].tracks[0].id;
                           } else { // loop between albums
                             // first album, first song
-                            nextTrackHash = '#'+linkType+':' + albumList[0].id + ':track:' + albumList[0].tracks[0].id;
+                            targetAlbum = first( albumList );
+                            nextTrackHash = '#'+linkType+':' + targetAlbum.id + ':track:' + targetAlbum.tracks[0].id;
                           }
                         }
                       });
@@ -580,7 +588,7 @@
         },
 
         animateWaveformData: function(waveformData) {
-          console.log('storing waveformData', waveformData);
+          //console.log('storing waveformData', waveformData);
           OursoPhone.player.setWaveformData(waveformData);
           if(waveformData!==undefined) {
             cancelAnimationFrame( OursoPhone.on.dataWaveformReady );
@@ -656,10 +664,13 @@
         trackListLoaded: function(tracks) {
           var $playlist = $("#playlist");
 
+          console.log('trackListLoaded', {tracks:tracks});
+
           OursoPhone.currentTrackList = tracks;
           OursoPhone.cache.trackList.store(tracks);
 
           $playlist.find('.track').remove();
+          $('.album').remove();
           $playlist.attr('data-album-id', '0').attr('data-display-mode', 'list');
 
           tracks.forEach( OursoPhone.ui.drawTracks );
@@ -686,7 +697,7 @@
           $playlist.find('.track').remove();
           playlist.tracks.forEach( OursoPhone.ui.drawTracks );
 
-          $playlist.find('.album').remove();
+          $('.album').remove();
           [playlist].forEach( OursoPhone.ui.drawAlbum );
 
           setTimeout(OursoPhone.on.tagInserted, 300);
@@ -732,7 +743,7 @@
 
           OursoPhone.cache.playList.store({userid: OursoPhone.config.scUserID, albums: playlists});
 
-          $playlist.find('.album').remove();
+          $('.album').remove();
           playlists.forEach( OursoPhone.ui.drawAlbum );
           $('albumbox').on('click', OursoPhone.on.playerClick);
 
@@ -822,7 +833,7 @@
             OursoPhone.utils.interfaceRelease();
             return;
           } else {
-            console.log('on.trackInfo', track);
+            //console.log('on.trackInfo', track);
           }
 
           $('#playlist').attr('data-song-id', track.id);
@@ -869,7 +880,7 @@
             whileplaying: function () {
               //console.log("track is playing", this._a, this._a.onaudioprocess );
               if(this._a.onaudioprocessattached===undefined) {
-                console.log('attaching context', this);
+                //console.log('attaching context', this);
                 /*
                 *                setTimeout(function() {
                 *                  //connect()
@@ -979,7 +990,7 @@
               location.href = '#';
               return false;
             }
-            $('#playlist').attr('data-display-mode', mode);
+            $('[data-display-mode]').attr('data-display-mode', mode);
           });
 
           // Get the canvas & its context, width, and height.
@@ -1008,7 +1019,7 @@
             OursoPhone.config.currentVolume = thisVal;
             OursoPhone.player.setVolume( thisVal*100 );
             if( OursoPhone.localStorage ) {
-              console.log('saving config');
+              console.info('saving config');
               localStorage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) );
             }
           });
@@ -1055,7 +1066,7 @@
             }
             OursoPhone.config.showComments = this.checked;
             if( OursoPhone.localStorage ) {
-              console.log('saving config');
+              console.info('saving config');
               localStorage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) );
             }
           });
@@ -1106,7 +1117,7 @@
               setY = parseInt(clickY)
           ;
 
-          if(setX === NaN || setY === NaN) {
+          if(isNaN(setX) || isNaN(setY)) {
             // not a mouse click
             setX = 10;
             setY = 10;
@@ -1198,7 +1209,7 @@
             $albumpicture
           ]);
 
-          $(html).appendTo('#playlist');
+          $(html).appendTo('#album-description');
           setTimeout(OursoPhone.on.tagInserted, 300);
         },
 
@@ -1456,7 +1467,7 @@
 
               $('#playlist').attr('data-tag-id', '0');
               $('#playlist').attr('data-album-id', '0');
-              $('#playlist').attr('data-user', response[0].user_id);
+              //$('#playlist').attr('data-user', response[0].user_id);
               OursoPhone.on.userResolved({id:response[0].user_id});
             } else {
               console.warn("User has an empty track list");

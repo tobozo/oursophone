@@ -1,6 +1,6 @@
-    
+
     var OursoPhone = {
-      
+
       config: {
         scClientID: "0ec3a92db08c758a47397bf8d588a250", /* STRING : a valid SoundCloud Client ID */
         scUserID: /*305413, //*/61698493, /* INT    : SoundClound user ID to fetch the playlists from */
@@ -8,6 +8,7 @@
         autoplay: true,     /* BOOL   : will automatically play the next song in the current album/taglist */
         theme: 'default',   /* STRING : must be in /css folder and named oursophone.theme.[string].css */
         showComments: false, /* BOOL   : will display comments while playing songs */
+        loop: true, /* BOOL  : cycle through current tracklist, taglist or albumlist */
         isInWebView: !!window._cordovaNative,
         isFeedbackEnabled: false, /* BOOL : can use haptic feecback */
         gestureLoaded: false, /* Priv.: will be set when library is loaded */
@@ -29,49 +30,88 @@
           return false;
         }
       },
-      userCache: {
-        /* TODO: persistent data store */
-        byid: { },
-        byusername: { },
-        bypermalink: { },
-        store: function(user) {
-          ['id', 'username', 'permalink'].forEach(function(prop) {
-            // TODO: find better than using property name as search criteria
-            var ucprop   = 'by' + prop;
-            var propname = user[prop];
-            if(propname) {
-              OursoPhone.userCache[ucprop][propname] = user;
-            }
-          });
+      cache:{
+        user: {
+          /* TODO: persistent data store */
+          byid: { },
+          byusername: { },
+          bypermalink: { },
+          store: function(user) {
+            ['id', 'username', 'permalink'].forEach(function(prop) {
+              // TODO: find better than using property name as search criteria
+              var ucprop   = 'by' + prop;
+              var propname = user[prop];
+              if(propname) {
+                OursoPhone.cache.user[ucprop][propname] = user;
+              }
+            });
+          },
+          find: function(criteria) {
+            if( OursoPhone.cache.user.byid[criteria] ) return OursoPhone.cache.user.byid[criteria];
+            if( OursoPhone.cache.user.byusername[criteria] ) return OursoPhone.cache.user.byusername[criteria];
+            if( OursoPhone.cache.user.bypermalink[criteria] ) return OursoPhone.cache.user.bypermalink[criteria];
+          },
+          fields: ['id', 'kind', 'full_name', 'permalink_url', 'avatar_url', 'description',
+          'website', 'website_title', 'track_count', 'playlist_count', 'followers_count',
+          'followings_count']
         },
-        find: function(criteria) {
-          if( OursoPhone.userCache.byid[criteria] ) return OursoPhone.userCache.byid[criteria];
-          if( OursoPhone.userCache.byusername[criteria] ) return OursoPhone.userCache.byusername[criteria];
-          if( OursoPhone.userCache.bypermalink[criteria] ) return OursoPhone.userCache.bypermalink[criteria];
+        track: {
+          byid: { },
+          store: function(track) {
+            OursoPhone.cache.track.byid[ track.id ] = track;
+          },
+          find: function(trackid) {
+            return OursoPhone.cache.byid[ trackid ];
+          }
         },
-        fields: ['id', 'kind', 'full_name', 'permalink_url', 'avatar_url', 'description',
-        'website', 'website_title', 'track_count', 'playlist_count', 'followers_count',
-        'followings_count']
+        trackList: {
+          /* TODO: persistent data store */
+          byuser: { },
+          byalbum: { },
+          store: function(tracklist) {
+            //console.log('will store tracklist', {tracklist:tracklist});
+            OursoPhone.cache.trackList.byuser[ tracklist[0].user.id ] = tracklist;
+          },
+          find: function(user) {
+            //console.log('trackListCache searching for', user, user.id);
+            return OursoPhone.cache.trackList.byuser[ user.id ];
+          },
+          fields: ['id', 'title', 'uri', 'duration', 'commentable', 'description', 'artwork_url']
+        },
+        album: {
+          byid: { },
+          store: function(album) {
+            OursoPhone.cache.album.byid[ album.id ] = album;
+          },
+          find: function(id) {
+            return OursoPhone.cache.album.byid[ id ];
+          }
+        },
+        tagList: {
+          bytag: { },
+          store: function(trackList) {
+            OursoPhone.cache.tagList.bytag[ trackList.tag ] = trackList.tracks;
+          },
+          find: function(tag) {
+            return OursoPhone.cache.tagList.bytag[ tag ];
+          }
+        },
+        playList: {
+          byuser: {
+          },
+          store: function( albumList ) {
+            OursoPhone.cache.playList.byuser[ albumList.userid ] = albumList.albums;
+          },
+          find: function( user ) {
+            return OursoPhone.cache.playList.byuser[ user ];
+          }
+        }
       },
-      trackListCache: {
-        /* TODO: persistent data store */
-        byuser: { },
-        byalbum: { },
-        store: function(tracklist) {
-          //console.log('will store tracklist', {tracklist:tracklist});
-          OursoPhone.trackListCache.byuser[ tracklist[0].user.id ] = tracklist;
-        },
-        find: function(user) {
-          //console.log('trackListCache searching for', user, user.id);
-          return OursoPhone.trackListCache.byuser[ user.id ]; 
-        },
-        fields: ['id', 'title', 'uri', 'duration', 'commentable', 'description', 'artwork_url']
-      },
-      waveformData: undefined, 
+      waveformData: undefined,
       waveformWidth: undefined,
       pixelTrans:"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
       templates: ['index', 'album-goback', 'album-item', 'album-no-picture', 'album-picture', 'track-item', 'track-no-picture', 'track-picture', 'user-item', 'view-mode-control', 'comment-item'],
-     
+
       loadTemplates: function() {
         var template = OursoPhone.templates.shift();
         if(template!==undefined) {
@@ -80,25 +120,25 @@
           OursoPhone.start();
         }
       },
-      
+
       init: function(options) {
         if(options) {
           console.log('merging options', OursoPhone.config, options);
           OursoPhone.config = $.extend(OursoPhone.config, options); // Overwrite settings
         }
-        
+
         if( OursoPhone.localStorage ) {
-          
+
           options = JSON.parse(localStorage.getItem('oursophone-config'));
           if(options!==null) {
             OursoPhone.config = $.extend(OursoPhone.config, options); // Overwrite settings
           }
-          
+
         }
-        
+
         // enable vibration support
         navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
-        
+
         if (navigator.vibrate) {
           // vibration API supported
           OursoPhone.config.isFeedbackEnabled = true;
@@ -107,39 +147,39 @@
             navigator.vibrate(100);
           }
         }
-        
+
         if(OursoPhone.config.isInWebView) {
           OursoPhone.config.thumbs.autoresize = false;
           OursoPhone.config.theme = 'mobile';
           OursoPhone.config.gestureLoaded = true;
-          
-          OursoPhone.config.isFeedbackEnabled = function() { 
+
+          OursoPhone.config.isFeedbackEnabled = function() {
             /* check for Cordova device-feedback plugin existence */
-            return !!window.plugins && window.plugins.deviceFeedback; 
+            return !!window.plugins && window.plugins.deviceFeedback;
           };
-          
+
           OursoPhone.ui.vibrate = function(e) {
             DF = window.plugins.deviceFeedback;
             DF.haptic(DF.VIRTUAL_KEY);
           }
-          
+
         } else {
           if(OursoPhone.config.thumbs.autoresize) {
             $(window).on('resize', OursoPhone.calcThumbsSize);
           }
         }
-        
+
         // template populating for the lazy
         String.prototype.replaceArray = function(find, replace) {
           var replaceString = this;
-          var regex; 
+          var regex;
           for (var i = 0; i < find.length; i++) {
             regex = new RegExp(find[i], "g");
             replaceString = replaceString.replace(regex, replace[i]);
           }
           return replaceString;
         };
-        
+
         var hasPhp = function() {
           var req = new XMLHttpRequest();
           // query self to get headers
@@ -149,7 +189,7 @@
           // assume the relay is php
           return !!/php/i.test(headers);
         }
-        
+
         var hasRuby = function() {
           var req = new XMLHttpRequest();
           // query self to get headers
@@ -160,20 +200,20 @@
           // assume the relay is php
           return !!/ruby/i.test(headers);
         }
-        
+
         if(hasPhp()) {
           // enable waveform animated plugin
           OursoPhone.config.CORSRelay = document.location.pathname;
         } else {
           if(hasRuby()) {
-            OursoPhone.config.CORSRelay = document.location.pathname;  
+            OursoPhone.config.CORSRelay = document.location.pathname;
           } else {
             $('#canvas-overlay').addClass('no-colors');
           }
         }
-        
+
         OursoPhone.loadTheme(function() {
-          
+
           try {
             // take a guess if templates are in the html body
             OursoPhone.start();
@@ -181,13 +221,13 @@
             // templates are not in the body, load them from their folder
             OursoPhone.loadTemplates();
           }
-          
+
         });
-        
+
         return this;
 
       },
-      
+
       loadTheme: function(callback) {
         if( !/^[a-z0-9_\-]+$/i.test(OursoPhone.config.theme) ) {
           callback();
@@ -195,7 +235,7 @@
         }
 
         $('style[id^="oursophone-theme"]').remove();
-        
+
         $.ajax({
           url: 'css/oursophone.theme.' + OursoPhone.config.theme + '.css',
           dataType: 'text',
@@ -208,14 +248,14 @@
             callback();
           }
         });
-        
+
       },
-      
+
       start: function() {
         var indexHTML;
         TemplateStore.init();
         indexHTML = TemplateStore.get('index').replaceArray(
-          ["{pixel-trans}"], 
+          ["{pixel-trans}"],
           [OursoPhone.pixelTrans]
         );
         $(indexHTML).appendTo('body');
@@ -223,7 +263,7 @@
         OursoPhone.onRouteChanged();
         OursoPhone.ui.init();
       },
-      
+
       calcThumbsSize: function() {
         /* will autoresize thumbnails to fit the number of columns (see config) */
         var wSize;
@@ -244,13 +284,13 @@
           wSize = $scrollBarChecker.width();
           console.log('scrollbar detected', $('#playlist').width() , $scrollBarChecker.width());
         } else {
-          wSize = $('#playlist').width();          
+          wSize = $('#playlist').width();
         }
         $scrollBarChecker.remove();
 
         trackWidth = wSize / OursoPhone.config.thumbs.rowspertrack;
         albumWidth = wSize / OursoPhone.config.thumbs.rowsperalbum;
-        
+
         // the whole thumb box is resized based on the child img's width
         // but outer containers may have margin/border
         // TODO : find a better way to calculate the width delta
@@ -264,48 +304,48 @@
             - -( $('#playlist .album').outerWidth() - $('#playlist .album img').width() )
           ;
         } catch(e) { ; }
-        
-        for(var i=0; i<lastStylesheet.cssRules.length; i++) { 
+
+        for(var i=0; i<lastStylesheet.cssRules.length; i++) {
           rule = $.trim( lastStylesheet.cssRules[i].cssText.split('{')[0] );
-          if( rule == '[data-display-mode="thumb"] .track img' 
-           || rule == '[data-display-mode="thumb"] .track .track-picture' 
+          if( rule == '[data-display-mode="thumb"] .track img'
+           || rule == '[data-display-mode="thumb"] .track .track-picture'
            || rule == '[data-display-mode="thumb"] .album img'
-           || rule == '[data-display-mode="thumb"] .album .album-picture' 
+           || rule == '[data-display-mode="thumb"] .album .album-picture'
            || rule == '[data-display-mode="thumb"] .track .track-title' ) {
             lastStylesheet.deleteRule(i);
             i--;
           }
         }
         lastStylesheet.insertRule(
-          '[data-display-mode="thumb"] .track img { width: ' + Math.floor( trackWidth - trackMargin ) + 'px }', 
+          '[data-display-mode="thumb"] .track img { width: ' + Math.floor( trackWidth - trackMargin ) + 'px }',
           lastStylesheet.cssRules.length-1
         );
         lastStylesheet.insertRule(
-          '[data-display-mode="thumb"] .track .track-picture { width: ' + Math.floor( trackWidth - trackMargin ) + 'px }', 
+          '[data-display-mode="thumb"] .track .track-picture { width: ' + Math.floor( trackWidth - trackMargin ) + 'px }',
           lastStylesheet.cssRules.length-1
         );
         lastStylesheet.insertRule(
-          '[data-display-mode="thumb"] .album .album-picture { width: ' + Math.floor( albumWidth - albumMargin ) + 'px }', 
+          '[data-display-mode="thumb"] .album .album-picture { width: ' + Math.floor( albumWidth - albumMargin ) + 'px }',
           lastStylesheet.cssRules.length-1
         );
         lastStylesheet.insertRule(
-          '[data-display-mode="thumb"] .album img { width: ' + Math.floor( albumWidth - albumMargin ) + 'px }', 
+          '[data-display-mode="thumb"] .album img { width: ' + Math.floor( albumWidth - albumMargin ) + 'px }',
           lastStylesheet.cssRules.length-1
         );
         lastStylesheet.insertRule(
           '[data-display-mode="thumb"] .track .track-title { font-size: ' + ( trackWidth/100 ).toFixed(2) + 'em }',
           lastStylesheet.cssRules.length-1
-        );                        
-        
+        );
+
         if(OursoPhone.config.thumbs.autoresize !== true) {
           $('.album').css({maxHeight: $('.album').width() })
         }
-        
+
       },
-      
+
       onRouteChanged: function() {
         var args = location.hash.replace('#', '').split(':');
-        
+
         if(args.length==2) {
           Route.list.dispatch(args);
           return;
@@ -316,33 +356,33 @@
         }
         Route.default(args);
       },
-      
+
       utils: {
-        
+
         htmlEncode: function(string){
           string = (string === null)?"":string.toString();
           string = $('<div/>').text(string).html();
           return string.replace(/\n/gi, '<br />\n');
         },
-        
+
         attrEncode: function(string) {
           string = (string === null)?"":string.toString();
           string = string.replace(/"/gi, '&quot;');
           return string.replace(/\n/gi, '<br />\n');
         },
-        
+
         interfaceLock: function() {
           $('body').addClass('locked');
         },
-        
+
         interfaceRelease: function() {
           $('body').removeClass('locked');
         }
-        
+
       },
-      
+
       player: {
-        
+
         pause: function() {
           var currentPlayer = OursoPhone.player.getCurrent()
           if(currentPlayer) {
@@ -352,7 +392,7 @@
           }
           OursoPhone.utils.interfaceRelease()
         },
-        
+
         play: function() {
           var currentPlayer = OursoPhone.player.getCurrent()
           if(currentPlayer) {
@@ -362,7 +402,7 @@
           }
           OursoPhone.utils.interfaceRelease();
         },
-        
+
         next: function() {
           var $playlist,
             playlistProps,
@@ -371,28 +411,32 @@
             album_id,
             track_id
           ;
-          
+
           if(!OursoPhone.currentTrackList.length) {
+            // TODO : handle loop on single track
+            console.warn('current tracklist is empty');
             OursoPhone.utils.interfaceRelease();
-            return;      
+            return;
           }
-          
+
           $playlist = $('#playlist');
-          
+
           playlistProps = {
             tag: $playlist.attr('data-tag-id'),
             user: $playlist.attr('data-user'),
             album: $playlist.attr('data-album-id')
           };
-          
+
           currentTrack = $playlist.attr('data-song-id');
-          
+
           OursoPhone.currentTrackList.forEach(function(track, trackIndex) {
 
-            var linkType = '';
-            var linkVal = '';
-            
-            if( playlistProps.tag !=0 ) {
+            var linkType = '',
+                linkVal = '',
+                albumList,
+                trackList;
+
+            if( playlistProps.tag !='0' ) {
               linkType = 'tag';
               linkVal  = playlistProps.tag;
             } else {
@@ -404,25 +448,52 @@
                 linkVal  = playlistProps.album;
               }
             }
-            
+            //console.log('examining ', currentTrack, track);
             if(track.id == currentTrack) {
+              //console.log('got cursor');
+              trackList = OursoPhone.currentTrackList;
               if( trackIndex+1 < OursoPhone.currentTrackList.length ) {
-                if(  OursoPhone.currentTrackList[trackIndex+1].id !== undefined 
-                  && OursoPhone.currentTrackList[trackIndex+1].id !==null) {
-                  nextTrackHash = '#'+linkType+':' + linkVal + ':track:' + OursoPhone.currentTrackList[trackIndex+1].id;   
+                if(  trackList[trackIndex+1].id !== undefined
+                  && trackList[trackIndex+1].id !== null) {
+                  nextTrackHash = '#'+linkType+':' + linkVal + ':track:' + trackList[trackIndex+1].id;
+                }
+              } else {
+                // current track is the last of its tracklist
+                if( OursoPhone.config.loop ) { // is loop enabled ?
+                  switch(linkType) {
+                    case 'album':
+                      // identify next album and play its first song
+                      albumList = OursoPhone.cache.playList.byuser[ OursoPhone.config.scUserID ];
+                      albumList.forEach(function(album, index) {
+                        if(album.id == linkVal) {
+                          if( index+1 < albumList.length ) {
+                            // next album, first song
+                            nextTrackHash = '#'+linkType+':' + albumList[index+1].id + ':track:' + albumList[index+1].tracks[0].id;
+                          } else { // loop between albums
+                            // first album, first song
+                            nextTrackHash = '#'+linkType+':' + albumList[0].id + ':track:' + albumList[0].tracks[0].id;
+                          }
+                        }
+                      });
+                    break;
+                    default:
+                      // jump back to the beginning of the current user-tracklist/taglist
+                      nextTrackHash = '#'+linkType+':' + linkVal + ':track:' + OursoPhone.currentTrackList[0].id;
+                  }; // end switch()
                 }
               }
             }
-           
+
           });
-          
+
           if(nextTrackHash) {
             location.href = nextTrackHash;
           } else {
+            console.log('no next track found');
             OursoPhone.utils.interfaceRelease();
           }
         },
-        
+
         prev: function() {
           var $playlist,
             playlistProps,
@@ -431,27 +502,27 @@
             album_id,
             track_id
           ;
-          
+
           if(!OursoPhone.currentTrackList.length) {
             OursoPhone.utils.interfaceRelease();
-            return;      
+            return;
           }
-          
+
           $playlist = $('#playlist');
-          
+
           playlistProps = {
             tag: $playlist.attr('data-tag-id'),
             user: $playlist.attr('data-user'),
             album: $playlist.attr('data-album-id')
           };
-          
+
           currentTrack = $playlist.attr('data-song-id');
-          
+
           OursoPhone.currentTrackList.forEach(function(track, trackIndex) {
-            
+
             var linkType = '';
             var linkVal = '';
-            
+
             if( playlistProps.tag !=0 ) {
               linkType = 'tag';
               linkVal  = playlistProps.tag;
@@ -464,16 +535,16 @@
                 linkVal  = playlistProps.album;
               }
             }
-            
+
             if(track.id == currentTrack) {
               if( trackIndex-1 >= 0 ) {
-                if(  OursoPhone.currentTrackList[trackIndex-1].id !== undefined 
+                if(  OursoPhone.currentTrackList[trackIndex-1].id !== undefined
                   && OursoPhone.currentTrackList[trackIndex-1].id !==null) {
-                  prevTrackHash = '#'+linkType+':' + linkVal + ':track:' + OursoPhone.currentTrackList[trackIndex-1].id;   
+                  prevTrackHash = '#'+linkType+':' + linkVal + ':track:' + OursoPhone.currentTrackList[trackIndex-1].id;
                 }
               }
             }
-            
+
           });
 
           if(prevTrackHash) {
@@ -482,11 +553,11 @@
             OursoPhone.utils.interfaceRelease();
           }
         },
-        
+
         applyVolume: function() {
           $('input[data-action="setvolume"]').trigger('change');
         },
-        
+
         setVolume: function(newVolume) {
           var currentPlayer = OursoPhone.player.getCurrent();
           if(currentPlayer===undefined) {
@@ -495,19 +566,19 @@
             currentPlayer.setVolume( newVolume );
           }
         },
-        
+
         getCurrent: function() {
           return OursoPhone.currentPlayer;
         },
-        
+
         getWaveFormData: function() {
           return OursoPhone.waveformData;
         },
-        
+
         setWaveformData: function(waveformData) {
           OursoPhone.waveformData = waveformData;
         },
-        
+
         animateWaveformData: function(waveformData) {
           console.log('storing waveformData', waveformData);
           OursoPhone.player.setWaveformData(waveformData);
@@ -518,7 +589,7 @@
             alert('dahoops');
           }
         },
-        
+
         songProgress: function() {
           var currentPlayer = OursoPhone.player.getCurrent();
           if(currentPlayer===undefined) return;
@@ -531,26 +602,26 @@
           } else {
             $('#canvas-overlay').css({'box-shadow':  progress.toFixed(0) + 'px 0 1px '+ chroma +' inset'});
           }
-          
+
           state = currentPlayer.playState === 1 ? 'playing' : state;
           state = currentPlayer.isBuffering === true ? 'loading' : state;
           state = currentPlayer.paused === true ? 'paused' : state;
-          
+
           $('#player-state,#controls').attr({
             'class': state,
             'data-state': state
           });
         }
       },
-      
+
       on: {
-        
+
         playerClick: function(e) {
-          
+
           if( OursoPhone.config.isFeedbackEnabled ) {
-            OursoPhone.ui.vibrate(e); 
+            OursoPhone.ui.vibrate(e);
           }
-          
+
           if($(this).attr('data-href')!='') {
             if(location.hash!=$(this).attr('data-href')) {
               location.href = $(this).attr('data-href');
@@ -561,181 +632,188 @@
 
         tagListLoaded: function(tracks) {
           var $playlist = $("#playlist");
-          
+
           OursoPhone.currentTrackList = tracks;
-          
-          $playlist.fadeOut(150);
-          $playlist.html('').attr('data-album-id', 0).attr('data-display-mode', 'list');
-          
+          OursoPhone.cache.tagList.store({tag: $playlist.attr('data-tag-id'), tracks: tracks});
+
+          $playlist.find('.track').remove();
+          $playlist.attr('data-album-id', '0').attr('data-display-mode', 'list');
+
           tracks.forEach( OursoPhone.ui.drawTracks );
           setTimeout(OursoPhone.on.tagInserted, 300);
-          
+
           // TODO : use internal route
           $('trackbox').off().on('click', OursoPhone.on.playerClick);
-          $playlist.fadeIn(150);
-          
+
           if(OursoPhone.config.isInWebView) {
             $('#playlist').attr('data-display-mode', 'thumb');
           }
-          
+
           OursoPhone.utils.interfaceRelease();
           OursoPhone.calcThumbsSize();
         },
 
         trackListLoaded: function(tracks) {
           var $playlist = $("#playlist");
-          
+
           OursoPhone.currentTrackList = tracks;
-          OursoPhone.trackListCache.store(tracks);
-          
-          $playlist.fadeOut(150);
-          $playlist.html('').attr('data-album-id', 0).attr('data-display-mode', 'list');
-          
+          OursoPhone.cache.trackList.store(tracks);
+
+          $playlist.find('.track').remove();
+          $playlist.attr('data-album-id', '0').attr('data-display-mode', 'list');
+
           tracks.forEach( OursoPhone.ui.drawTracks );
           setTimeout(OursoPhone.on.tagInserted, 300);
-          
+
           $('trackbox').off().on('click', OursoPhone.on.playerClick);
-          
-          $playlist.fadeIn(150);
-          
+
           if(OursoPhone.config.isInWebView) {
             $('#playlist').attr('data-display-mode', 'thumb');
           }
-          
+
           OursoPhone.utils.interfaceRelease();
           OursoPhone.calcThumbsSize();
         },
-        
+
         playlistLoaded:  function(playlist) {
           var $playlist = $("#playlist"), $currentSound;
-          $playlist.fadeOut(150);
-          $playlist.html('').attr('data-album-id', playlist.id);
-          
+
+          $playlist.attr('data-album-id', playlist.id);
+
           OursoPhone.currentTrackList = playlist.tracks;
-          
-          [playlist].forEach( OursoPhone.ui.drawAlbum );
-          
+          //OursoPhone.cache.playList.store({userid: OursoPhone.config.scUserID, albums: playlist});
+
+          $playlist.find('.track').remove();
           playlist.tracks.forEach( OursoPhone.ui.drawTracks );
-          
+
+          $playlist.find('.album').remove();
+          [playlist].forEach( OursoPhone.ui.drawAlbum );
+
           setTimeout(OursoPhone.on.tagInserted, 300);
-          
-          $('trackbox').off().on('click', OursoPhone.on.playerClick);            
+
+          $('trackbox').off().on('click', OursoPhone.on.playerClick);
           $('albumbox').off().on('click', OursoPhone.on.playerClick);
-          
+
           $('trackbox').removeClass('active');
-          
-          $playlist.fadeIn(150);
-          
+
           if( $('#user-description .user-id').text() != playlist.user.id ) {
-            var userInCache = OursoPhone.userCache.find(track.user.id);
+            var userInCache = OursoPhone.cache.user.find(playlist.user.id);
             if( userInCache ) {
               OursoPhone.ui.drawUser( userInCache );
             } else {
-              SC.get('/users/'+track.user.id, OursoPhone.ui.drawUser);
+              SC.get('/users/'+playlist.user.id, OursoPhone.ui.drawUser);
             }
           }
-          
+
           $currentSound = $('trackbox[data-index="'+ $playlist.attr('data-song-id') +'"]');
-          
+
           if( $currentSound.length ) {
             $currentSound.addClass('active');
             if(OursoPhone.currentTrack) {
-              OursoPhone.ui.drawTrack(OursoPhone.currentTrack);
+              OursoPhone.ui.drawTrackInfo(OursoPhone.currentTrack);
             }
           } else {
-            // 
+            //
           }
-          
+
           if(OursoPhone.config.isInWebView) {
             $('#playlist').attr('data-display-mode', 'thumb');
           }
-          
+
           OursoPhone.utils.interfaceRelease();
           OursoPhone.calcThumbsSize()
         },
-        
+
         playlistsGet: function(playlists) {
-          var $playlist = $("#playlist");
-          $playlist.fadeOut(150);
-          $playlist.html('').attr('data-album-id', null).attr('data-song-id', null);
+          var $playlist = $("#playlist"),
+                albumId = $playlist.attr('data-album-id');
+
+          $playlist.attr('data-album-id', '0');
+
+          OursoPhone.cache.playList.store({userid: OursoPhone.config.scUserID, albums: playlists});
+
+          $playlist.find('.album').remove();
           playlists.forEach( OursoPhone.ui.drawAlbum );
           $('albumbox').on('click', OursoPhone.on.playerClick);
-          $playlist.fadeIn(150);
+
+          if(albumId!='0') {
+            $('albumbox[data-index="'+ albumId +'"]').addClass('active');
+          }
+
           OursoPhone.calcThumbsSize()
         },
-        
+
         dataWaveformReady: function() {
           var currentPlayer = OursoPhone.player.getCurrent();
           var waveformData  = OursoPhone.player.getWaveFormData();
           var rgb, r, g, b;
-          
+
           if(currentPlayer!==undefined && waveformData!==undefined) {
-            
+
             var ratio = (currentPlayer.position / currentPlayer.duration);
             var progress = (ratio*OursoPhone.waveformWidth);
             var waveformIndex = (ratio*1800).toFixed(0);
             var waveformRatio = 0;
-            
+
             waveformRatio = waveformData.samples[waveformIndex] / waveformData.height;
-            
+
             r = 255-(255*waveformRatio).toFixed(0);
             g = (255*waveformRatio).toFixed(0);
             b = 255-(255*waveformRatio).toFixed(0);
-            
+
             rgb = "rgb("+ r +","+ g +","+ b +")";
-            
+
             //document.getElementById('waveform').style.opacity = waveformRatio;
             document.getElementById('animbox').style.height = waveformData.samples[waveformIndex] + 'px';
             document.getElementById('animbox').style.backgroundColor = rgb;
-            
+
           }
-          
+
           requestAnimationFrame(OursoPhone.on.dataWaveformReady);
         },
-        
+
         streamReady: function(player, error) {
-          
+
           OursoPhone.currentPlayer = player;
           $('#comments').empty();
-          
+
           if( OursoPhone.graphUpdater ) {
             clearInterval( OursoPhone.graphUpdater );
-            $('#canvas-overlay').css('box-shadow',  '0px 0 1px rgba(0, 255, 0, 0.4) inset');
+            $('#canvas-overlay').css('box-shadow',  '0 0 1px rgba(0, 255, 0, 0.4) inset');
           }
           OursoPhone.player.applyVolume();
           OursoPhone.graphUpdater = setInterval( OursoPhone.player.songProgress, 500 );
           OursoPhone.utils.interfaceRelease();
         },
-        
+
         streamFinished: function() {
           if( OursoPhone.graphUpdater!== undefined ) {
             clearInterval( OursoPhone.graphUpdater );
             cancelAnimationFrame( OursoPhone.on.dataWaveformReady );
-            $('#canvas-overlay').css({'box-shadow': '0px 0 1px rgba(0, 255, 0, 0.4) inset', opacity:1});
+            $('#canvas-overlay').css({'box-shadow': '0 0 1px rgba(0, 255, 0, 0.4) inset', opacity:1});
           }
-          
+
           if(OursoPhone.config.autoplay) {
             // calculate next song
-            
+
             $('[data-action="forward"]').trigger('click');
-            
+
             // play next song
           } else {
             // song ended
-            // TODO : autoplay first song of the next album/tracklist/taglist
           }
         },
-        
+
         trackInfo: function(track, error) {
           var url, urlImg, urlData,
               currentPlayer = OursoPhone.player.getCurrent(),
               $canvasOverlay, $img, imageObj, userInCache,
               onTimedComments = null;
-          
+
           if(OursoPhone.config.showComments){
             onTimedComments = OursoPhone.ui.drawComment;
           }
-              
+
           if(error!==null) {
             console.warn('Error while loading track', error);
             //$('#player-title').html( error.message );
@@ -744,22 +822,22 @@
             OursoPhone.utils.interfaceRelease();
             return;
           } else {
-            console.log('on.trackInfo', track); 
+            console.log('on.trackInfo', track);
           }
-          
-          OursoPhone.currentTrack = track;
-          OursoPhone.ui.drawTrack(track);
 
-          $('#playlist').attr('data-song-id', OursoPhone.currentTrack.id);
-          
+          $('#playlist').attr('data-song-id', track.id);
+
+          OursoPhone.currentTrack = track;
+          OursoPhone.ui.drawTrackInfo( track );
+
           $('trackbox').removeClass('active');
-          $('trackbox[data-index="'+ OursoPhone.currentTrack.id +'"]').addClass('active');
+          $('trackbox[data-index="'+ track.id +'"]').addClass('active');
 
           if( currentPlayer ) {
             currentPlayer.pause();
           }
-          
-          SC.stream("/tracks/" + OursoPhone.currentTrack.id, {
+
+          SC.stream("/tracks/" + track.id, {
             autoPlay: true,
             usePeakData: true,
             useWaveformData: true,
@@ -776,10 +854,10 @@
               *                if(this._a===undefined) return;
               *                console.log('while loading', this);
               *                audio = this._a;
-              *                
+              *
               *                audio.volume = 1/3;
               *                audio.controls = true;
-              *                
+              *
               *                audio.addEventListener('canplay', function() {
               *                    // Timing issue with Chrome - if console opened, audioprocess stops firing during playback?
               *                    // a timeout here seems to help, but does not completely fix.
@@ -804,50 +882,50 @@
 
           // urlImg  = track.waveform_url.replace('http://', '');
           // urlImg  = track.waveform_url.replace('https://', '');
-          
-          userInCache = OursoPhone.userCache.find(track.user.id);
-          
+
+          userInCache = OursoPhone.cache.user.find(track.user.id);
+
           if( userInCache ) {
             OursoPhone.ui.drawUser( userInCache );
           } else {
             //console.log('user not in cache', track.user.id);
             SC.get('/users/'+track.user.id, OursoPhone.ui.drawUser);
           }
-          
+
           $canvasOverlay = $('#canvas-overlay');
-          
+
           $img = $canvasOverlay.find('img');
-          
+
           if($img.length<=0) {
             $img = $('<img class="waveform-img" />');
             $canvasOverlay.append($img);
             //console.log('appended overlay');
           } else {
-            //console.log('reusing overlay'); 
+            //console.log('reusing overlay');
           }
-          
+
           $img.on('error', function() {
             // transparent pixel
             $img.attr('src', OursoPhone.pixelTrans);
           });
-          
+
           $img.on('load', function() {
             OursoPhone.waveformWidth = $(this).width();
           });
-          
+
           $img.attr('src', track.waveform_url);
           //$('#canvas-overlay').empty().append($img);
-          
+
           if(OursoPhone.config.isInWebView) {
             // enable waveform animated plugin
             urlData = track.waveform_url.replace('http://w1', 'http://wis');
             urlData = track.waveform_url.replace('https://w1', 'https://wis');
-            
+
           } else {
 
             urlData = track.waveform_url.replace('http://w1', 'http://wis');
             urlData = track.waveform_url.replace('https://w1', 'https://wis');
-            
+
             if(OursoPhone.config.CORSRelay!==false) {
               // enable waveform animated plugin
               urlData = track.waveform_url.replace('http://w1', 'wis');
@@ -856,20 +934,20 @@
             }
 
           }
-          
+
           if(urlData) {
-            $.get(urlData, OursoPhone.player.animateWaveformData); 
+            $.get(urlData, OursoPhone.player.animateWaveformData);
           }
-          
+
         },
-        
+
         userResolved: function(user) {
           if(user.id) {
             OursoPhone.config.scUSerID = user.id;
             location.href = '#user:' + user.id;
           }
         },
-        
+
         tagInserted: function() {
           $('tag').off().on('click', function() {
             var cleanStr = $(this).text().replace(/[^a-z0-9 ]+/gi, '');
@@ -881,119 +959,120 @@
           });
         }
       },
-      
+
       ui: {
-        
+
         init: function() {
           // inject the view controls
           var $viewModeControl = TemplateStore.get('view-mode-control');
           $($viewModeControl).appendTo('#controls');
-          
+
           $('.display-mode-box div').off().on('click', function(e) {
-            
+
             if( OursoPhone.config.isFeedbackEnabled ) {
-              OursoPhone.ui.vibrate(e); 
+              OursoPhone.ui.vibrate(e);
             }
-            
+
             var mode = this.className.split('-')[2];
             if(mode==='up') {
+              $('#playlist').find('.track').remove();
               location.href = '#';
               return false;
             }
             $('#playlist').attr('data-display-mode', mode);
           });
-          
+
           // Get the canvas & its context, width, and height.
           $('#canvas-overlay').on('mousedown', function(evt) {
-            
+
             if( OursoPhone.config.isFeedbackEnabled ) {
-              OursoPhone.ui.vibrate(evt); 
+              OursoPhone.ui.vibrate(evt);
             }
-            
+
             var pos = (evt.pageX - $(this).offset().left) / $(this).width();
             var currentPlayer = OursoPhone.player.getCurrent();
             var currentduration = currentPlayer.duration;
             var newPosition = (currentduration*pos).toFixed(0);
             currentPlayer.setPosition(newPosition);
           });
-          
+
           $('.search-button').on('click', function() {
             var user;
             if(user = prompt('Load playlist from user : ')) {
               OursoPhone.ui.resolveUser(user)
             }
           });
-          
+
           $('input[data-action="setvolume"]').on('change', function() {
             var thisVal = $(this).val();
             OursoPhone.config.currentVolume = thisVal;
             OursoPhone.player.setVolume( thisVal*100 );
             if( OursoPhone.localStorage ) {
               console.log('saving config');
-              localStorage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) ); 
+              localStorage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) );
             }
           });
-          
+
           if( OursoPhone.config.currentVolume ) {
             $('input[data-action="setvolume"]').val( OursoPhone.config.currentVolume );
           }
-          
-          
+
+
           $('#controls .player-button').on('click', function(e) {
             var that = $(this);
-            
+
             if( OursoPhone.config.isFeedbackEnabled ) {
-              OursoPhone.ui.vibrate(e); 
+              OursoPhone.ui.vibrate(e);
             }
-            
+
             OursoPhone.ui.touchRipple(e, this, $(this).find('span'), function() {
               OursoPhone.utils.interfaceLock();
-              
+
               switch(that.attr('data-action')) {
                 case 'play':
                   OursoPhone.player.play();
-                  break;
+                break;
                 case 'pause':
                   OursoPhone.player.pause();
-                  break;
+                break;
                 case 'backward':
                   OursoPhone.player.prev();
-                  break;
+                break;
                 case 'forward':
                   OursoPhone.player.next()
-                  break;
+                break;
               }
-              
+
             });
-            
+
             e.preventDefault();
             return false;
           });
-          
+
           $('#un-mute').on('click', function(e) {
             if( OursoPhone.config.isFeedbackEnabled ) {
-              OursoPhone.ui.vibrate(e); 
+              OursoPhone.ui.vibrate(e);
             }
             OursoPhone.config.showComments = this.checked;
             if( OursoPhone.localStorage ) {
               console.log('saving config');
-              localStorage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) ); 
+              localStorage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) );
             }
           });
           $('#un-mute').attr('checked', OursoPhone.config.showComments);
-          
+
           $('.volume-control label').on('click', function(e) {
             if( OursoPhone.config.isFeedbackEnabled ) {
-              OursoPhone.ui.vibrate(e); 
+              OursoPhone.ui.vibrate(e);
             }
-            
+
             var $volumeControl = $('[data-action="setvolume"]');
             var currentVolume = 0- -$volumeControl.val();
             var maxVolume     = 0- -$volumeControl.prop('max');
             var minVolume     = 0- -$volumeControl.prop('min');
             var step          = 0- -$volumeControl.prop('step');
             var newVolume;
-           
+
             switch( $(this).attr('data-volume-action') ) {
               case '+':
                 if( ( currentVolume + step ) <= maxVolume ) {
@@ -1014,25 +1093,31 @@
             OursoPhone.calcThumbsSize();
           }, 500);
         },
-        
+
         touchRipple: function(e, source, target, callback) {
-          
-          var svgCircle;
-          var x = e.pageX;
-          var y = e.pageY;
-          var clickY = y - $(source).offset().top;
-          var clickX = x - $(source).offset().left;
-          //var box = source;
-          
-          var setX = parseInt(clickX);
-          var setY = parseInt(clickY);
-          
+
+          var svgCircle,
+              x = e.pageX,
+              y = e.pageY,
+              $source = $(source),
+              clickY = y - $source.offset().top,
+              clickX = x - $source.offset().left,
+              setX = parseInt(clickX),
+              setY = parseInt(clickY)
+          ;
+
+          if(setX === NaN || setY === NaN) {
+            // not a mouse click
+            setX = 10;
+            setY = 10;
+          }
+
           target.append('<svg><circle cx="'+setX+'" cy="'+setY+'" r="'+0+'"></circle></svg>');
-          
+
           svgCircle = $(target).find("circle");
-          
+
           svgCircle.animate({
-            "r" : $(source).outerWidth()
+            "r" : $source.outerWidth()
           },{
             //easing: "easeOut",
             duration: 300,
@@ -1041,20 +1126,20 @@
             },
             complete: function() {
               svgCircle.attr("r", 0);
-              $(source).find("svg").remove();                    
+              $source.find("svg").remove();
               if(callback) {
                 callback();
               }
             }
           });
         },
-        
+
         drawAlbum: function(album) {
-          var $albumpicture, 
-          $albumtpl = TemplateStore.get('album-item'),
-          albumTagList;
-          var html ='';
-          
+          var $albumpicture,
+                  $albumtpl = TemplateStore.get('album-item'),
+               albumTagList,
+                       html ='';
+
           if(album.streamable!==true) {
             console.warn('album is not sreamable', album);
             return;
@@ -1063,6 +1148,9 @@
             console.warn('album is not embeddable', album);
             return;
           }
+
+          OursoPhone.cache.album.store(album);
+
           if(album.downloadable===true) {
             console.info('album "'+album.title+'" is downloadable');
             // set download link?
@@ -1081,7 +1169,7 @@
           } else {
             albumTagList = '<tag>' + album.tag_list.match(/(".*?")|(\S+)/g).join('</tag><tag>') + '</tag>';
           }
-          
+
           html = $albumtpl.replaceArray([
             "{album-kind}",
             "{album-createdat}",
@@ -1109,11 +1197,11 @@
             album.artwork_url,
             $albumpicture
           ]);
-          
+
           $(html).appendTo('#playlist');
           setTimeout(OursoPhone.on.tagInserted, 300);
         },
-        
+
         drawTracks: function(track, index, thisArg) {
           // thisArg => all tracks
           var attributes = '';
@@ -1123,7 +1211,9 @@
           var linkType = '';
           var linkVal = '';
           var trackTagList = '';
-          
+
+          OursoPhone.cache.track.store(track);
+
           if( $('#playlist').attr('data-tag-id')!=0 ) {
             linkType = 'tag';
             linkVal = $("#playlist").attr('data-tag-id')
@@ -1136,7 +1226,7 @@
               linkVal = $("#playlist").attr('data-album-id');
             }
           }
-                    
+
           if(track.streamable!==true) {
             console.warn('track is not sreamable', track);
             return;
@@ -1150,13 +1240,13 @@
             // set download link?
           }
           if(track.download_url===undefined) {
-            track.download_url = ''; 
+            track.download_url = '';
           }
           if(track.track_type===null) {
-            track.track_type = ''; 
-          }          
+            track.track_type = '';
+          }
           // build attributes list
-          OursoPhone.trackListCache.fields.forEach(function(attr) {
+          OursoPhone.cache.trackList.fields.forEach(function(attr) {
             attributes += 'data-' + attr + '="' + OursoPhone.utils.attrEncode(track[attr]) + '" ';
           });
           if (track.artwork_url != null && track.artwork_url.length > 0) {
@@ -1205,11 +1295,19 @@
           ]);
           $(html).appendTo('#playlist');
         },
-        
-        drawTrack: function(track) {
-          var trackBox = $('#playlist trackbox[data-index="'+ track.id +'"]').clone();
+
+        drawTrackInfo: function(track) {
+          var trackBoxContainer, trackBox;
+
+          // todo : build it instead of cloning it
+          trackBox = $('#playlist trackbox[data-index="'+ track.id +'"]').clone();
+
           if(!trackBox.length) {
-            console.log('should query api');
+            // trackBox is being drawn before the trackList is rendered
+            OursoPhone.ui.drawTracks( track );
+            trackBoxContainer = $('#playlist trackbox[data-index="'+ track.id +'"]').parent();
+            trackBox = trackBoxContainer.find('trackbox').clone();
+            trackBoxContainer.remove();
           }
           if(track.streamable!==true) {
             console.warn('track is not sreamable', track);
@@ -1223,13 +1321,13 @@
           $('#track-description').html('').append( trackBox );
 
           if(OursoPhone.config.isInWebView) {
-            
+
             $(trackBox).find('.track-titlespan').on('click', function() {
-              
+
               var downloadUrl = $(this).attr('data-download-url'),
                   downloadTitle = $(this).text();
               console.log(downloadUrl);
-              
+
               var fail = function(error) {
                 // error.code == FileTransferError.ABORT_ERR
                 alert("An error has occurred: Code = " + error.code);
@@ -1246,20 +1344,20 @@
                 }
               });
               return;*/
-              
+
               window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function onFileSystemSuccess(fileSystem) {
                 fileSystem.root.getFile("dummy.html", {create: true,exclusive: false}, function gotFileEntry(fileEntry) {
                   var sPath = fileEntry.toURL().replace("dummy.html", "");
                   var fileTransfer = new FileTransfer();
                   fileTransfer.onprogress = function(progress) {
                     var percent = progress.loaded/progress.total;
-                    //console.log('progress', ); 
+                    //console.log('progress', );
                   }
-                  
+
                   fileEntry.remove();
                   var DBuri = encodeURI(downloadUrl + '?client_id=' + OursoPhone.config.scClientID);
                   console.log('will download', DBuri, sPath);
-                  
+
                   fileTransfer.download(DBuri, sPath + downloadTitle, function (theFile) {
                     console.log("download complete: " + theFile.toURL(), theFile, this);
                     //console.log(theFile.toURL());
@@ -1272,37 +1370,37 @@
               }, fail);
             });
           }
-          
+
           setTimeout(OursoPhone.on.tagInserted, 300);
         },
-        
+
         drawComment: function(comments){
           var firstComment = comments[0],
-              userComment, 
-              blockComment, 
-              userAvatar, 
+              userComment,
+              blockComment,
+              userAvatar,
               userLink,
               text = "",
               htmlComment,
               $comments;
-          
+
           if(!OursoPhone.config.showComments){
             return;
           }
-          
+
           /*
           userLink.on('click', function(e) {
             if( OursoPhone.config.isFeedbackEnabled ) {
-              OursoPhone.ui.vibrate(e); 
+              OursoPhone.ui.vibrate(e);
             }
             OursoPhone.ui.resolveUser(firstComment.user.id)
             return false;
           });
           */
-          
+
           // avoid duplicates (it CAN happen when rewinding a track)
           if(! $('#comments li[data-id="'+ firstComment.id +'"]').length) {
-            
+
             htmlComment = TemplateStore.get('comment-item').replaceArray([
               '{src}',
               '{alt}',
@@ -1322,13 +1420,13 @@
             ]);
             $(htmlComment).on('click', function(e) {
               if( OursoPhone.config.isFeedbackEnabled ) {
-                OursoPhone.ui.vibrate(e); 
+                OursoPhone.ui.vibrate(e);
               }
               OursoPhone.ui.resolveUser(firstComment.user.id, false)
               return false;
             }).appendTo('#comments');
           }
-          
+
           $comments = $('#comments');
           $comments.stop(true, true).animate({scrollTop: $comments.prop("scrollHeight")}, 300);
         },
@@ -1339,7 +1437,7 @@
             alert("User not found");
           } else {
             if(user.id) {
-              OursoPhone.userCache.store(user);
+              OursoPhone.cache.user.store(user);
               OursoPhone.on.userResolved(user);
             } else {
               console.warn('handleResolvedUser: nothing found');
@@ -1354,58 +1452,58 @@
             if(response.length>0) {
 
               OursoPhone.currentTrackList = response;
-              OursoPhone.trackListCache.store(response);
-              
-              $('#playlist').attr('data-tag-id', 0);
-              $('#playlist').attr('data-album-id', 0);
+              OursoPhone.cache.trackList.store(response);
+
+              $('#playlist').attr('data-tag-id', '0');
+              $('#playlist').attr('data-album-id', '0');
               $('#playlist').attr('data-user', response[0].user_id);
               OursoPhone.on.userResolved({id:response[0].user_id});
             } else {
-              console.warn("User has an empty track list"); 
+              console.warn("User has an empty track list");
             }
           }
         },
-        
+
         resolveUser: function(searchStr, loadTrackList) {
           var tracksInCache = false,
-                userInCache = OursoPhone.userCache.find( searchStr );
-                
+                userInCache = OursoPhone.cache.user.find( searchStr );
+
           if( userInCache ) {
-            
+
             if( loadTrackList !== false ) {
 
-              tracksIncache = OursoPhone.trackListCache.find( userInCache );
-              
+              tracksIncache = OursoPhone.cache.trackList.find( userInCache );
+
               if( tracksIncache ) {
-                $('#playlist').attr('data-tag-id', 0);
-                $('#playlist').attr('data-album-id', 0);
+                $('#playlist').attr('data-tag-id', '0');
+                $('#playlist').attr('data-album-id', '0');
                 $('#playlist').attr('data-user', userInCache.id);
                 OursoPhone.on.trackListLoaded( tracksIncache );
                 return;
-              }  
-              
+              }
+
             } else {
-              // only draw user and return ? 
+              // only draw user and return ?
               OursoPhone.ui.drawUser( userInCache );
               return;
             }
-            
+
           }
-          
+
           if(/^[a-z0-9 _\-]+$/gi.test(searchStr)) {
             // user ID or permalink
 
             if( loadTrackList !== false ) {
 
               SC.get('/users/' + searchStr + '/tracks', {
-                filter:'streamable', 
+                filter:'streamable',
                 order: 'created_at'
               }, OursoPhone.ui.handleResolveError);
-              
+
             } else {
-              
+
               SC.get('/users/'+searchStr, OursoPhone.ui.drawUser);
-              
+
             }
 
 
@@ -1418,27 +1516,27 @@
             SC.get('/resolve', {
               url: 'https://soundcloud.com/' + searchStr
             }, OursoPhone.ui.handleResolvedUser);
-            
+
           }
 
 
         },
-        
+
         drawUser: function(user, error) {
           var $usertpl = TemplateStore.get('user-item'),
             $userBlock = $('#user-description'),
                 lastY;
           var html = '';
-          
-          OursoPhone.userCache.store( user );
-          
-          OursoPhone.userCache.fields.forEach(function(propName) {
+
+          OursoPhone.cache.user.store( user );
+
+          OursoPhone.cache.user.fields.forEach(function(propName) {
             if(user[propName]==undefined || user[propName]==null) {
               user[propName] = '';
             }
           })
-          
-          html = $usertpl.replaceArray([    
+
+          html = $usertpl.replaceArray([
             "{user-id}",
             "{user-kind}",
             "{user-fullname}",
@@ -1451,7 +1549,7 @@
             "{user-playlistcount}",
             "{user-followerscount}",
             "{user-followingcount}"
-          ],[            
+          ],[
             user.id,
             user.kind,
             user.full_name,
@@ -1465,14 +1563,14 @@
             user.followers_count,
             user.followings_count
           ]);
-          
+
           $userBlock.removeClass('contracted').html(html);
-          
+
           if(OursoPhone.config.gestureLoaded) {
             // this sucks
             return;
-            
-            
+
+
             $userBlock.off().on('touchstart', function(e) {
               lastY = e.originalEvent.touches ? e.originalEvent.touches[0].pageY : e.pageY;
             });
@@ -1487,14 +1585,13 @@
             });
             $userBlock.on('click', function(e) {
               if( OursoPhone.config.isFeedbackEnabled ) {
-                OursoPhone.ui.vibrate(e); 
+                OursoPhone.ui.vibrate(e);
               }
               console.log('user toggle');
               $('.waveform-holder').toggleClass('contracted');
             });
           }
-          
+
         }
       }
     };
-    

@@ -9,14 +9,14 @@
       },
       init: function(callback) {
         var templates = document.querySelectorAll('script[type="text/html"]');
-        
+
         if(templates.length === 0) {
           throw("Early TemplateStore:init() call, aborting");
         }
-        
+
         for(var tpl in templates) {
           if(templates[tpl].id!==undefined) {
-            console.log('loading template ', templates[tpl].id);
+            console.info('loading template ', templates[tpl].id);
             TemplateStore.get(templates[tpl].id);
           }
         }
@@ -28,9 +28,9 @@
         if(TemplateStore.store[id]!==undefined) {
           return TemplateStore.store[id];
         }
-        
+
         $tpl = document.querySelector('#'+id);
-        
+
         if($tpl) {
           TemplateStore.store[id] = $tpl.innerHTML;
           $tpl.parentElement.removeChild($tpl);
@@ -51,4 +51,4 @@
       },
       store: { }
     };
-    
+

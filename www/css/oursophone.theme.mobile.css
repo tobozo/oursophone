@@ -1,11 +1,20 @@
- 
+[data-display-mode="thumb"] .track .track-picture, [data-display-mode="thumb"] .track img {
+  height: auto;
+}
+
+#playlist[data-album-id] .album .album-picture {
+display: block;
+width: 50%;
+height: auto;
+}
+
 #player {
   overflow: hidden;
 }
- 
+
 #player-header {
   width:100%;
-  min-height:inherit; 
+  min-height:inherit;
   overflow:hidden;
 }
 #playlist {
@@ -45,7 +54,7 @@
 }
 
 .user-description {
-  transition: all 0.3s ease;  
+  transition: all 0.3s ease;
 }
 
 .waveform-holder.contracted  {
@@ -62,7 +71,7 @@
 }
 
 .waveform-holder.contracted+div .search-button {
-  font-size: 5em; 
+  font-size: 5em;
 }
 
 
@@ -114,11 +123,11 @@ input[type="range"]::-webkit-slider-thumb {
 
 
 .search-button {
-  font-size: 5em; 
+  font-size: 5em;
 }
 
 .user-stats {
-  font-size: 4vw; 
+  font-size: 4vw;
 }
 .user-description {
   font-size: 3vw;

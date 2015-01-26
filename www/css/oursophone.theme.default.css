@@ -7,7 +7,7 @@
    * The font size of this selector
    * determines the height of the line,
    * and height+width of the thumb image
-   */ 
+   */
   font-size: 12px;
 }
 
@@ -35,12 +35,19 @@
   padding-left: 1.5em;
 }
 
-
+div.track:last-of-type {/*
+   display:block;
+   float:left;
+   position:relative;
+   width:100%;
+   outline:2px solid red;
+   content: "blah";*/
+}
 
 [data-display-mode="thumb"] .track-picture, [data-display-mode="thumb"] .track-nopicture {
   /*
    * the width of this selector
-   * determines the width *and* height 
+   * determines the width *and* height
    * of the image thumbnail block
    */
   width:100px;

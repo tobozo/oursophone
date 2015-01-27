@@ -93,6 +93,7 @@
           var cacheData;
           if( OursoPhone.localStorage ) {
             cacheData = localStorage.getItem('oursophone-cache');
+            if(cacheData === null) return;
             OursoPhone.cache.size = OursoPhone.cache.hsize( cacheData.length );
             $('oursophone').attr('data-size', OursoPhone.cache.size );
             cacheData = JSON.parse(cacheData);

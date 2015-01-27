@@ -1,4 +1,4 @@
-<section id="player">
+<oursophone id="player">
   <header id="player-header">
     <div class="waveform-holder">
       <div id="animbox"></div>
@@ -35,4 +35,4 @@
     <ol id="comments"></ol>
   </header>
   <div id="playlist" data-display-mode="thumb" data-tag-id="0" data-album-id="0" data-song-id="0" data-user=""></div>
-</section>
+</oursophone>

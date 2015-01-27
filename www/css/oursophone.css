@@ -21,11 +21,25 @@ body {
   width: 100%;
 }
 
-section {
+oursophone {
   display: block;
   font-family: Arial;
   font-size: 1em;
 }
+
+
+oursophone[data-size]:after {
+  bottom: 0.3em;
+  color: black;
+  content: "LocalStorage Cache Size: " attr(data-size);
+  font-size: 75%;
+  font-weight: bold;
+  position: absolute;
+  right: 1.75em;
+  text-shadow: 0 0 0.2em rgba(255, 255, 255, 0.8), 0 0 0.1em peru;
+}
+
+
 div {
   margin: 5px;
 }

@@ -18,25 +18,124 @@
           rowspertrack: 5   /* INT  : amount of thumbnails per row for track thumbs */
         }
       },
+      initialPlay: true, /* BOOL : will be unset on first play() */
       currentPlayer: undefined, /* shortcut to the SoundManager instance */
       currentTrack: undefined, /* shortcut to the track playing */
+      waveFormRenderer: undefined, /* waveform renderer type (requestAnimationFrame/setInterval) */
       graphUpdater: undefined, /* animationFrame used to update the graph */
-      localStorage: function() {
-        try {
-          localStorage.setItem(mod, mod);
-          localStorage.removeItem(mod);
-          return true;
-        } catch(e) {
-          return false;
-        }
+      graphData: {
+        progress: 0,
+        chroma: 'transparent'
       },
+      localStorage: false,
       cache:{
+        size: "",
+        hsize: function(fileSizeInBytes) { /* human readable size */
+          var i = -1;
+          var byteUnits = [' kB', ' MB', ' GB', ' TB', 'PB', 'EB', 'ZB', 'YB'];
+          do {
+            fileSizeInBytes = fileSizeInBytes / 1024;
+            i++;
+          } while (fileSizeInBytes > 1024);
+
+          return Math.max(fileSizeInBytes, 0.1).toFixed(1) + byteUnits[i];
+        },
+        lastWrite: null,
+        lifeTime: 86400, // TODO : tweak this
+        autoSaveFreq: 10, // check if config needs saving every N seconds
+        autoSave: function() {
+          if( OursoPhone.cache.lastWrite === null ) {
+            // not modified
+            return;
+          }
+          if( (0- -OursoPhone.cache.lastWrite + OursoPhone.cache.autoSaveFreq*1000) < Date.now() ) {
+            // no update during the last interval
+            return;
+          }
+          // update hit !
+          OursoPhone.cache.store();
+        },
+        store: function() {
+          var cacheData;
+          if( OursoPhone.localStorage ) {
+            console.info('freezing cache in localStorage');
+            cacheData = {
+              user: {
+                byid: OursoPhone.cache.user.byid,
+                byusername: OursoPhone.cache.user.byusername,
+                bypermalink: OursoPhone.cache.user.bypermalink
+              },
+              track: {
+                byid: OursoPhone.cache.track.byid
+              },
+              trackList:{
+                byuser: OursoPhone.cache.trackList.byuser,
+                byalbum: OursoPhone.cache.trackList.byalbum
+              },
+              album: {
+                byid: OursoPhone.cache.album.byid
+              },
+              tagList: {
+                bytag: OursoPhone.cache.tagList.bytag
+              },
+              playList: {
+                byuser: OursoPhone.cache.playList.byuser
+              }
+            };
+            cacheData.cached_at = Date.now();
+            cacheData = JSON.stringify( cacheData );
+            localStorage.setItem('oursophone-cache', cacheData);
+            OursoPhone.cache.size = OursoPhone.cache.hsize( cacheData.length );
+            $('oursophone').attr('data-size', OursoPhone.cache.size );
+          }
+        },
+        restore: function() {
+          var cacheData;
+          if( OursoPhone.localStorage ) {
+            cacheData = localStorage.getItem('oursophone-cache');
+            OursoPhone.cache.size = OursoPhone.cache.hsize( cacheData.length );
+            $('oursophone').attr('data-size', OursoPhone.cache.size );
+            cacheData = JSON.parse(cacheData);
+            if(cacheData!==null) {
+              // jquery extends
+              console.info('unfreezing cache from localStorage', cacheData);
+              OursoPhone.cache.user.byid = cacheData.user.byid;
+              OursoPhone.cache.user.byusername = cacheData.user.byusername;
+              OursoPhone.cache.user.bypermalink = cacheData.user.bypermalink;
+              OursoPhone.cache.track.byid = cacheData.track.byid;
+              OursoPhone.cache.trackList.byuser = cacheData.trackList.byuser;
+              OursoPhone.cache.trackList.byalbum = cacheData.trackList.byalbum;
+              OursoPhone.cache.album.byid = cacheData.album.byid;
+              OursoPhone.cache.tagList.bytag = cacheData.tagList.bytag;
+              OursoPhone.cache.playList.byuser = cacheData.playList.byuser;
+            }
+          }
+        },
+        clean: function() {
+          if( OursoPhone.localStorage ) {
+            localStorage.removeItem('oursophone-cache');
+          }
+        },
+        stamp: function(obj) {
+          if(obj.cached_at===undefined) {
+            obj.cached_at = Date.now();
+            OursoPhone.cache.lastWrite = obj.cached_at;
+            console.log('stamping obj', {obj:obj, stamp: obj.cached_at});
+          } else {
+            console.log('obj already stamped', {obj:obj, stamp:obj.cached_at});
+          }
+          return obj;
+        },
         user: {
-          /* TODO: persistent data store */
           byid: { },
           byusername: { },
           bypermalink: { },
           store: function(user) {
+            if( OursoPhone.cache.user.byid[ user.id ] !== undefined ) {
+              // don't overwrite
+              return;
+            }
+            user = OursoPhone.cache.stamp( user );
             ['id', 'username', 'permalink'].forEach(function(prop) {
               // TODO: find better than using property name as search criteria
               var ucprop   = 'by' + prop;
@@ -50,6 +149,7 @@
             if( OursoPhone.cache.user.byid[criteria] ) return OursoPhone.cache.user.byid[criteria];
             if( OursoPhone.cache.user.byusername[criteria] ) return OursoPhone.cache.user.byusername[criteria];
             if( OursoPhone.cache.user.bypermalink[criteria] ) return OursoPhone.cache.user.bypermalink[criteria];
+            return false;
           },
           fields: ['id', 'kind', 'full_name', 'permalink_url', 'avatar_url', 'description',
           'website', 'website_title', 'track_count', 'playlist_count', 'followers_count',
@@ -58,29 +158,49 @@
         track: {
           byid: { },
           store: function(track) {
+            if( OursoPhone.cache.track.byid[ track.id ] !== undefined ) {
+              // don't overwrite
+              return;
+            }
+
+            track = OursoPhone.cache.stamp( track );
             OursoPhone.cache.track.byid[ track.id ] = track;
           },
           find: function(trackid) {
-            return OursoPhone.cache.byid[ trackid ];
+            if( OursoPhone.cache.track.byid[ trackid ]!== undefined ) {
+              return OursoPhone.cache.track.byid[ trackid ];
+            }
+            return false;
           }
         },
         trackList: {
-          /* TODO: persistent data store */
           byuser: { },
           byalbum: { },
-          store: function(tracklist) {
-            //console.log('will store tracklist', {tracklist:tracklist});
-            OursoPhone.cache.trackList.byuser[ tracklist[0].user.id ] = tracklist;
+          store: function(tracks) {
+            if( OursoPhone.cache.trackList.byuser[ tracks[0].user.id ] !== undefined ) {
+              // dont' overwrite
+              return;
+            }
+            tracklist = OursoPhone.cache.stamp( {tracks:tracks} );
+            OursoPhone.cache.trackList.byuser[ tracks[0].user.id ] = tracklist;
+            OursoPhone.cache.store();
           },
           find: function(user) {
-            //console.log('trackListCache searching for', user, user.id);
-            return OursoPhone.cache.trackList.byuser[ user.id ];
+            if( OursoPhone.cache.trackList.byuser[ user.id ] !== undefined ) {
+              return OursoPhone.cache.trackList.byuser[ user.id ].tracks;
+            }
+            return false;
           },
           fields: ['id', 'title', 'uri', 'duration', 'commentable', 'description', 'artwork_url']
         },
         album: {
           byid: { },
           store: function(album) {
+            if( OursoPhone.cache.album.byid[ album.id ] !== undefined ) {
+              // don't overwrite
+              return;
+            }
+            album = OursoPhone.cache.stamp( album );
             OursoPhone.cache.album.byid[ album.id ] = album;
           },
           find: function(id) {
@@ -90,20 +210,40 @@
         tagList: {
           bytag: { },
           store: function(trackList) {
-            OursoPhone.cache.tagList.bytag[ trackList.tag ] = trackList.tracks;
+            var tracks;
+            if( OursoPhone.cache.tagList.bytag[ trackList.tag ] !== undefined ) {
+              // don't overwrite
+              return;
+            }
+            tracks = OursoPhone.cache.stamp( {tracks: trackList.tracks} );
+            OursoPhone.cache.tagList.bytag[ trackList.tag ] = tracks;
+            OursoPhone.cache.store();
           },
           find: function(tag) {
-            return OursoPhone.cache.tagList.bytag[ tag ];
+            if( OursoPhone.cache.tagList.bytag[ tag ]!== undefined ) {
+              return OursoPhone.cache.tagList.bytag[ tag ].tracks;
+            }
+            return false;
           }
         },
         playList: {
-          byuser: {
-          },
+          byuser: { },
           store: function( albumList ) {
-            OursoPhone.cache.playList.byuser[ albumList.userid ] = albumList.albums;
+            var albums;
+            if( OursoPhone.cache.playList.byuser[ albumList.userid ] !== undefined ) {
+              // don't overwrite
+              return;
+            }
+            albums = OursoPhone.cache.stamp({albums: albumList.albums});
+            OursoPhone.cache.playList.byuser[ albumList.userid ] = albums;
+            OursoPhone.cache.store();
           },
           find: function( user ) {
-            return OursoPhone.cache.playList.byuser[ user ];
+            if( OursoPhone.cache.playList.byuser[ user ] !== undefined ) {
+              return OursoPhone.cache.playList.byuser[ user ].albums;
+            }
+            console.warn('playlist not found for user:', user);
+            return false;
           }
         }
       },
@@ -122,23 +262,33 @@
       },
 
       init: function(options) {
+        var cache;
         if(options) {
           console.log('merging options', OursoPhone.config, options);
           OursoPhone.config = $.extend(OursoPhone.config, options); // Overwrite settings
         }
 
+        try {
+          localStorage.setItem('blah', 'blah');
+          localStorage.removeItem('blah');
+          OursoPhone.localStorage = true;
+        } catch(e) { ; }
+
         if( OursoPhone.localStorage ) {
 
           options = JSON.parse(localStorage.getItem('oursophone-config'));
           if(options!==null) {
-            OursoPhone.config = $.extend(OursoPhone.config, options); // Overwrite settings
+            OursoPhone.config = $.extend( OursoPhone.config, options ); // Overwrite settings
           }
+
+          OursoPhone.cache.restore();
+
+          setInterval(OursoPhone.cache.autoSave, OursoPhone.cache.autoSaveFreq*1000);
 
         }
 
-        // enable vibration support
         navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
-
+        // vibration API supported ?
         if (navigator.vibrate) {
           // vibration API supported
           OursoPhone.config.isFeedbackEnabled = true;
@@ -382,13 +532,35 @@
       },
 
       player: {
-
+        stop: function() {
+          OursoPhone.currentPlayer.stop();
+          OursoPhone.currentPlayer.position = 0;
+          if( OursoPhone.localStorage ) {
+            localStorage.removeItem('currentPlayerPosition');
+          }
+          clearInterval( OursoPhone.graphUpdater );
+          $('#player-state').attr({
+            "class":"",
+            "data-state":""
+          });
+        },
         pause: function() {
           var currentPlayer = OursoPhone.player.getCurrent()
           if(currentPlayer) {
             if(currentPlayer.paused===false) {
               currentPlayer.pause();
+            }else {
+              console.warn('received blind pause');
             }
+          } else {
+            console.warn('received early pause');
+          }
+
+          //clearInterval( OursoPhone.graphUpdater );
+          cancelAnimationFrame( OursoPhone.player.dataWaveformReady );
+
+          if( OursoPhone.localStorage ) {
+            localStorage.removeItem('currentPlayerPosition');
           }
           OursoPhone.utils.interfaceRelease()
         },
@@ -398,8 +570,18 @@
           if(currentPlayer) {
             if(currentPlayer.paused===true) {
               currentPlayer.play();
+              console.warn('sending play');
+            } else {
+              console.warn('received blind play, expecting paused=true and got paused=', currentPlayer.paused);
             }
+          } else {
+            console.warn('received early play');
           }
+          /*
+          if( !OursoPhone.graphUpdater  ) {
+            OursoPhone.graphUpdater = setInterval( OursoPhone.player.songProgress, 500 );
+            requestAnimationFrame( OursoPhone.player.dataWaveformReady );
+          }*/
           OursoPhone.utils.interfaceRelease();
         },
 
@@ -412,11 +594,13 @@
             track_id
           ;
 
+          OursoPhone.player.stop();
+
           function first(obj) {
             for (var a in obj) return a;
           }
 
-          if(!OursoPhone.currentTrackList.length) {
+          if(!OursoPhone.currentTrackList || !OursoPhone.currentTrackList.length) {
             // TODO : handle loop on single track
             console.warn('current tracklist is empty');
             OursoPhone.utils.interfaceRelease();
@@ -452,9 +636,7 @@
                 linkVal  = playlistProps.album;
               }
             }
-            //console.log('examining ', currentTrack, track);
             if(track.id == currentTrack) {
-              //console.log('got cursor');
               trackList = OursoPhone.currentTrackList;
               if( trackIndex+1 < OursoPhone.currentTrackList.length ) {
                 if(  trackList[trackIndex+1].id !== undefined
@@ -467,7 +649,7 @@
                   switch(linkType) {
                     case 'album':
                       // identify next album and play its first song
-                      albumList = OursoPhone.cache.playList.byuser[ OursoPhone.config.scUserID ];
+                      albumList = OursoPhone.cache.playList.byuser[ OursoPhone.config.scUserID ].albums;
                       albumList.forEach(function(album, index) {
 
                         var targetAlbum;
@@ -478,7 +660,7 @@
                             nextTrackHash = '#'+linkType+':' + albumList[index+1].id + ':track:' + albumList[index+1].tracks[0].id;
                           } else { // loop between albums
                             // first album, first song
-                            targetAlbum = first( albumList );
+                            targetAlbum = albumList[first( albumList )];
                             nextTrackHash = '#'+linkType+':' + targetAlbum.id + ':track:' + targetAlbum.tracks[0].id;
                           }
                         }
@@ -498,6 +680,7 @@
             location.href = nextTrackHash;
           } else {
             console.log('no next track found');
+            location.href ='#';
             OursoPhone.utils.interfaceRelease();
           }
         },
@@ -506,10 +689,12 @@
           var $playlist,
             playlistProps,
             currentTrack,
-            nextTrackHash = false,
+            prevTrackHash = false,
             album_id,
             track_id
           ;
+
+          OursoPhone.player.stop();
 
           if(!OursoPhone.currentTrackList.length) {
             OursoPhone.utils.interfaceRelease();
@@ -588,32 +773,106 @@
         },
 
         animateWaveformData: function(waveformData) {
-          //console.log('storing waveformData', waveformData);
-          OursoPhone.player.setWaveformData(waveformData);
+          var interval;
+
           if(waveformData!==undefined) {
-            cancelAnimationFrame( OursoPhone.on.dataWaveformReady );
-            requestAnimationFrame(OursoPhone.on.dataWaveformReady);
+
+            cancelAnimationFrame( OursoPhone.player.dataWaveformReady );
+            clearInterval( OursoPhone.player.dataWaveformReady );
+
+            OursoPhone.player.setWaveformData(waveformData);
+            // css transition time is 100ms
+            // waveform data length is always 1800
+            // 1800 * 100 = 180000
+            /*if( OursoPhone.currentTrack.duration > 180000 ) {*/
+              interval = ((OursoPhone.currentTrack.duration / 180000) * 100).toFixed(0);
+              // use setInterval, not enough data for a decent 30fps anyway
+              OursoPhone.waveFormRenderer = 'setInterval';
+              setInterval( OursoPhone.player.dataWaveformReady,  interval );
+            /*} else {
+              console.log("animateWaveformData: use requestAnimationFrame, don't bother calculating optimal refresh rate");
+              // use requestAnimationFrame, don't bother calculating optimal refresh rate
+              OursoPhone.waveFormRenderer = 'requestAnimationFrame';
+              requestAnimationFrame( OursoPhone.player.dataWaveformReady );
+            }*/
+
+            if( OursoPhone.currentTrack.duration > 180000 ) {
+              $('#animbox').css('transition', 'all '+ interval +'ms cubic-bezier(0.5, -0.5, 0.5, 1.5) 0s');
+            } else {
+              $('#animbox').css('transition', 'all 0.1s ease 0s');
+            }
+
+            //cancelAnimationFrame( OursoPhone.player.dataWaveformReady );
+            //requestAnimationFrame( OursoPhone.player.dataWaveformReady );
           } else {
             alert('dahoops');
           }
         },
 
-        songProgress: function() {
+        dataWaveformReady: function() {
           var currentPlayer = OursoPhone.player.getCurrent();
+          var waveformData  = OursoPhone.player.getWaveFormData();
+          var rgb, r, g, b;
+
+          if(currentPlayer!==undefined && waveformData!==undefined) {
+
+            var       ratio = (currentPlayer.position / currentPlayer.duration),
+                   progress = (ratio*OursoPhone.waveformWidth),
+              waveformIndex = (ratio*1800).toFixed(0),
+              waveformRatio = 0
+            ;
+
+            waveformRatio = waveformData.samples[waveformIndex] / waveformData.height;
+
+            r = 255-(255*waveformRatio).toFixed(0);
+            g = (255*waveformRatio).toFixed(0);
+            b = 255-(255*waveformRatio).toFixed(0);
+
+            rgb = "rgb("+ r +","+ g +","+ b +")";
+
+            //document.getElementById('waveform').style.opacity = waveformRatio;
+            document.getElementById('animbox').style.height = waveformData.samples[waveformIndex] + 'px';
+            document.getElementById('animbox').style.backgroundColor = rgb;
+            OursoPhone.graphData = {
+                chroma: rgb,
+                 ratio: ratio,
+              progress: progress
+            };
+
+          }
+          if( OursoPhone.waveFormRenderer == 'requestAnimationFrame' ) {
+            requestAnimationFrame(OursoPhone.player.dataWaveformReady);
+          }
+        },
+
+        songProgress: function() {
+          // don't call use this in requestAnimationFrame
+          // instead use linear CSS transitions and setInterval
+          var state, currentPlayer = OursoPhone.player.getCurrent();
+
           if(currentPlayer===undefined) return;
-          var ratio = (currentPlayer.position / currentPlayer.duration);
-          var state = currentPlayer.playState;
-          var progress = (ratio*OursoPhone.waveformWidth);
-          var chroma = document.getElementById('animbox').style.backgroundColor;
-          if(ratio===1) {
+
+          if(OursoPhone.graphData.ratio===1) {
             OursoPhone.on.streamFinished();
           } else {
-            $('#canvas-overlay').css({'box-shadow':  progress.toFixed(0) + 'px 0 1px '+ chroma +' inset'});
+            $('#canvas-overlay').css({
+              'box-shadow':  OursoPhone.graphData.progress.toFixed(0) + 'px 0 1px '+ OursoPhone.graphData.chroma +' inset'
+            });
           }
 
           state = currentPlayer.playState === 1 ? 'playing' : state;
           state = currentPlayer.isBuffering === true ? 'loading' : state;
           state = currentPlayer.paused === true ? 'paused' : state;
+
+          if( OursoPhone.localStorage ) {
+            if( state == 'playing' ) {
+              //console.log('songProgress setitem', currentPlayer.position);
+              localStorage.setItem('currentPlayerPosition',  currentPlayer.position);
+            } else {
+              //console.log('songProgress delitem');
+              localStorage.setItem('currentPlayerPosition',  null);
+            }
+          }
 
           $('#player-state,#controls').attr({
             'class': state,
@@ -754,44 +1013,28 @@
           OursoPhone.calcThumbsSize()
         },
 
-        dataWaveformReady: function() {
-          var currentPlayer = OursoPhone.player.getCurrent();
-          var waveformData  = OursoPhone.player.getWaveFormData();
-          var rgb, r, g, b;
-
-          if(currentPlayer!==undefined && waveformData!==undefined) {
-
-            var ratio = (currentPlayer.position / currentPlayer.duration);
-            var progress = (ratio*OursoPhone.waveformWidth);
-            var waveformIndex = (ratio*1800).toFixed(0);
-            var waveformRatio = 0;
-
-            waveformRatio = waveformData.samples[waveformIndex] / waveformData.height;
-
-            r = 255-(255*waveformRatio).toFixed(0);
-            g = (255*waveformRatio).toFixed(0);
-            b = 255-(255*waveformRatio).toFixed(0);
-
-            rgb = "rgb("+ r +","+ g +","+ b +")";
-
-            //document.getElementById('waveform').style.opacity = waveformRatio;
-            document.getElementById('animbox').style.height = waveformData.samples[waveformIndex] + 'px';
-            document.getElementById('animbox').style.backgroundColor = rgb;
-
-          }
-
-          requestAnimationFrame(OursoPhone.on.dataWaveformReady);
-        },
-
         streamReady: function(player, error) {
-
+          var startFrom;
           OursoPhone.currentPlayer = player;
           $('#comments').empty();
 
-          if( OursoPhone.graphUpdater ) {
+          if( OursoPhone.graphUpdater!== undefined ) {
+            // clear previous timers
             clearInterval( OursoPhone.graphUpdater );
+            cancelAnimationFrame( OursoPhone.player.dataWaveformReady );
+            // reset progress box
             $('#canvas-overlay').css('box-shadow',  '0 0 1px rgba(0, 255, 0, 0.4) inset');
           }
+
+          if( OursoPhone.localStorage && OursoPhone.initialPlay ) {
+            startFrom = localStorage.getItem('currentPlayerPosition');
+            // page reload : resume track at specific timestamp ?
+            if( startFrom && startFrom !== null) {
+              console.info('resuming track at', startFrom);
+              OursoPhone.currentPlayer.position = startFrom;
+            }
+          }
+          OursoPhone.initialPlay = false;
           OursoPhone.player.applyVolume();
           OursoPhone.graphUpdater = setInterval( OursoPhone.player.songProgress, 500 );
           OursoPhone.utils.interfaceRelease();
@@ -800,8 +1043,13 @@
         streamFinished: function() {
           if( OursoPhone.graphUpdater!== undefined ) {
             clearInterval( OursoPhone.graphUpdater );
-            cancelAnimationFrame( OursoPhone.on.dataWaveformReady );
+            cancelAnimationFrame( OursoPhone.player.dataWaveformReady );
             $('#canvas-overlay').css({'box-shadow': '0 0 1px rgba(0, 255, 0, 0.4) inset', opacity:1});
+          }
+
+          if( OursoPhone.localStorage ) {
+            localStorage.removeItem('currentPlayerPosition');
+            OursoPhone.currentPlayer.position = 0;
           }
 
           if(OursoPhone.config.autoplay) {
@@ -819,7 +1067,8 @@
           var url, urlImg, urlData,
               currentPlayer = OursoPhone.player.getCurrent(),
               $canvasOverlay, $img, imageObj, userInCache,
-              onTimedComments = null;
+              onTimedComments = null
+          ;
 
           if(OursoPhone.config.showComments){
             onTimedComments = OursoPhone.ui.drawComment;
@@ -978,6 +1227,8 @@
           var $viewModeControl = TemplateStore.get('view-mode-control');
           $($viewModeControl).appendTo('#controls');
 
+          $('oursophone').attr('data-size', OursoPhone.cache.size );
+
           $('.display-mode-box div').off().on('click', function(e) {
 
             if( OursoPhone.config.isFeedbackEnabled ) {
@@ -986,7 +1237,7 @@
 
             var mode = this.className.split('-')[2];
             if(mode==='up') {
-              $('#playlist').find('.track').remove();
+              //$('#playlist').find('.track').remove();
               location.href = '#';
               return false;
             }
@@ -1163,7 +1414,7 @@
           OursoPhone.cache.album.store(album);
 
           if(album.downloadable===true) {
-            console.info('album "'+album.title+'" is downloadable');
+            //console.info('album "'+album.title+'" is downloadable');
             // set download link?
           }
           if (album.artwork_url != null && album.artwork_url.length > 0) {
@@ -1247,7 +1498,7 @@
             return;
           }
           if(track.downloadable===true) {
-            console.info('track "'+track.title+'" is downloadable');
+            //console.info('track "'+track.title+'" is downloadable');
             // set download link?
           }
           if(track.download_url===undefined) {

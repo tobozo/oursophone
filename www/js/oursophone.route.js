@@ -4,8 +4,7 @@
         var $playlist = $('#playlist'),
             userInCache,
             playListInCache;
-
-        // not arguments given, show albums. TODO : play first song from first album ?
+        // no arguments given, show albums. TODO : play first song from first album ?
         $playlist.attr('data-album-id', 0).attr('data-tag-id', 0).attr('data-user', '');
 
         playListInCache = OursoPhone.cache.playList.find( OursoPhone.config.scUserID );

@@ -35,9 +35,10 @@
         <title>Oursophone</title>
     </head>
     <body>
-        <script type="text/javascript" src="js/oursophone.js"></script>
+        <!-- <script type="text/javascript" src="js/oursophone.js"></script>
         <script type="text/javascript" src="js/oursophone.route.js"></script>
-        <script type="text/javascript" src="js/oursophone.template.js"></script>
+        <script type="text/javascript" src="js/oursophone.template.js"></script> -->
+        <script type="text/javascript" src="js/oursophone.min.js"></script>
         <script type="text/javascript">
           (function(isInWebView){
             if(isInWebView) {
@@ -90,7 +91,7 @@
             // release the bear !
             OursoPhone.init();
 
-          }(window._cordovaNative));
+          }(window._cordovaNative || window.__nwWindowId));
         </script>
     </body>
 </html>

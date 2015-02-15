@@ -1,3 +1,4 @@
+
     var TemplateStore = {
       config: {
         folder: 'templates/',
@@ -11,7 +12,7 @@
         var templates = document.querySelectorAll('script[type="text/html"]');
 
         if(templates.length === 0) {
-          throw("Early TemplateStore:init() call, aborting");
+          return("Early TemplateStore:init() call, aborting");
         }
 
         for(var tpl in templates) {

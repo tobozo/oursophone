@@ -179,7 +179,8 @@ OursoPhone.cache = {
     },
     find: function(id) {
       return OursoPhone.cache.album.byid[ id ];
-    }
+    },
+    fields: ['id', 'kind', 'created_at', 'duration', 'track_count', 'genre', 'title', 'description', 'artwork_url']
   },
   tagList: {
     bytag: { },

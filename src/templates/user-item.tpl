@@ -1,14 +1,14 @@
   <div class="user">
     <label for="user-description-toggler"></label>
 
-    
+
     <img class="user-avatarurl" src="{user-avatarurl}" />
     <span class="user-id">{user-id}</span>
     <span class="user-kind">{user-kind}</span>
     <div class="user-stats">
       <span class="user-fullname"><a target="_blank" class="user-permalinkurl" href="{user-permalinkurl}">{user-fullname}</a></span>
       <span class="user-trackcount" title="tracks"><a href="#user:{user-id}">{user-trackcount}</a></span>
-      <span class="user-playlistcount" title="playlists">{user-playlistcount}</span>
+      <span class="user-playlistcount" title="playlists" data-user-id="{user-id}">{user-playlistcount}</span>
       <span class="user-followerscount" title="followers">{user-followerscount}</span>
       <span class="user-followingcount" title="following">{user-followingcount}</span>
     </div>

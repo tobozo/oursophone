@@ -114,6 +114,9 @@ OursoPhone.on.playlistLoaded = function(playlist) {
     //
   }
 
+  $playlist.addClass('docked');
+  $('.display-mode-thumb').trigger('click');
+
   if(OursoPhone.config.isInWebView) {
     $('#playlist').attr('data-display-mode', 'thumb');
   }
@@ -142,8 +145,12 @@ OursoPhone.on.playlistsGet = function(playlists) {
   if(albumId!='0') {
     $('albumbox[data-index="'+ albumId +'"]').addClass('active');
   }
-
-  OursoPhone.calcThumbsSize()
+  //if($playlist.is(':empty')) {
+    $playlist.removeClass('docked');
+  //} else {
+  //  $playlist.addClass('docked');
+  //}
+  OursoPhone.calcThumbsSize();
 };
 
 
@@ -208,9 +215,9 @@ OursoPhone.on.streamFinished = function() {
 
 OursoPhone.on.trackInfo = function(track, error) {
   var url, urlImg, urlData,
-  currentPlayer = OursoPhone.player.getCurrent(),
-  $canvasOverlay, $img, imageObj, userInCache,
-  onTimedComments = null
+      currentPlayer = OursoPhone.player.getCurrent(),
+      $canvasOverlay, $img, imageObj, userInCache,
+      onTimedComments = null
   ;
 
   if(OursoPhone.config.showComments){
@@ -235,6 +242,8 @@ OursoPhone.on.trackInfo = function(track, error) {
 
   $('trackbox').removeClass('active');
   $('trackbox[data-index="'+ track.id +'"]').addClass('active');
+  $('.display-mode-trackview').trigger('click');
+
 
   if( currentPlayer ) {
     currentPlayer.pause();
@@ -316,7 +325,7 @@ OursoPhone.on.trackInfo = function(track, error) {
     OursoPhone.waveformWidth = $(this).width();
   });
 
-  $img.attr('src', track.waveform_url);
+  $img.attr('src', track.waveform_url).removeClass('loader');
   //$('#canvas-overlay').empty().append($img);
 
   if(OursoPhone.config.isInWebView) {

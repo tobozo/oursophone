@@ -109,6 +109,7 @@ OursoPhone.init = function(options) {
         if( (Date.now()) - OursoPhone.lastResize < 300 || OursoPhone.lastResize ===0 ) {
           return;
         }
+        $('#flex-box').scrollTop(0);
         OursoPhone.calcThumbsSize();
         OursoPhone.lastResize = 0;
       }, 300);

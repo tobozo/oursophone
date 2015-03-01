@@ -4,21 +4,66 @@ OursoPhone.ui  = {};
 OursoPhone.ui.init = function() {
   // inject the view controls
   var $viewModeControl = TemplateStore.get('view-mode-control');
+
   $($viewModeControl).appendTo('#controls');
 
   $('oursophone').attr('data-size', OursoPhone.cache.size );
 
   $('.display-mode-box div').off().on('click', function(e) {
 
+    var mode = this.className.split('-')[2],
+        $this = $(this),
+        $playlist = $('#playlist'),
+        $scrollTarget,
+        $flexBox;
+
     if( OursoPhone.config.isFeedbackEnabled ) {
       OursoPhone.ui.vibrate(e);
     }
 
-    var mode = this.className.split('-')[2];
+    OursoPhone.ui.touchRipple(e, this, $(this));
+
     switch(mode) {
+
+      case 'albumview':
+      case 'trackview':
+      case 'userview':
+
+        if( $this.hasClass('view-active') ) {
+          $playlist.removeClass('docked');
+          console.log('view already set');
+          return false;
+        }
+console.log('wat');
+        $scrollTarget = $('#' + mode.replace('view', '') + '-description');
+
+        if($scrollTarget.is(':empty')) {
+          console.log('no need to scroll to an empty slot');
+          $playlist.removeClass('docked');
+          return false;
+        }
+console.log('wot');
+        // do NOT animate the scroll itself
+        $flexBox = $('#flex-box');
+
+        $flexBox.animate({opacity:0.5}, 100, function() {
+          console.log('wut');
+          $flexBox.scrollTo( $scrollTarget, 0, function() {
+            $flexBox.animate({opacity:1}, 100, function() {
+
+            });
+          });
+        });
+
+        $('.display-mode-box div').removeClass('view-active');
+        $this.addClass('view-active');
+        $playlist.removeClass('docked');
+
+      break;
       case 'up':
+        $('.display-mode-albumview').trigger("click");
         location.href = '#';
-        break;
+      break;
       case 'thumb':
         setTimeout(function() {
           OursoPhone.calcThumbsSize({
@@ -30,7 +75,7 @@ OursoPhone.ui.init = function() {
             marginWidthRule:    '[data-display-mode="thumb"] .track .track-picture',
             fontSizeRule:       '[data-display-mode="thumb"] .track .track-title'
           });
-
+/*
           OursoPhone.calcThumbsSize({
             maxrows:            OursoPhone.config.thumbs.rowsperalbum,
             containerSelector:  '#album-description',
@@ -40,11 +85,18 @@ OursoPhone.ui.init = function() {
             marginWidthRule:    '[data-display-mode="thumb"] .album .album-picture',
             fontSizeRule:       '[data-display-mode="thumb"] .album .album-title'
           });
-
+*/
 
         }, 300);
       case 'list':
-        $('[data-display-mode]').attr('data-display-mode', mode);
+        $('#playlist[data-display-mode]').attr('data-display-mode', mode);
+        $('.display-mode-box div').removeClass('mode-active');
+        $this.addClass('mode-active');
+        if($playlist.is(':empty')) {
+          $playlist.removeClass('docked');
+        } else {
+          $playlist.addClass('docked');
+        }
     }
     return false;
   });
@@ -52,15 +104,20 @@ OursoPhone.ui.init = function() {
   // Get the canvas & its context, width, and height.
   $('#canvas-overlay').on('mousedown', function(evt) {
 
+    var pos, currentPlayer, currentduration, newPosition;
+
     if( OursoPhone.config.isFeedbackEnabled ) {
       OursoPhone.ui.vibrate(evt);
     }
 
-    var pos = (evt.pageX - $(this).offset().left) / $(this).width();
-    var currentPlayer = OursoPhone.player.getCurrent();
-    var currentduration = currentPlayer.duration;
-    var newPosition = (currentduration*pos).toFixed(0);
-    currentPlayer.setPosition(newPosition);
+    pos = (evt.pageX - $(this).offset().left) / $(this).width();
+    currentPlayer = OursoPhone.player.getCurrent();
+
+    if(currentPlayer) {
+      currentduration = currentPlayer.duration;
+      newPosition = (currentduration*pos).toFixed(0);
+      currentPlayer.setPosition(newPosition);
+    }
   });
 
   $('.search-button').on('click', function() {
@@ -156,6 +213,28 @@ OursoPhone.ui.init = function() {
       $volumeControl.val(newVolume).trigger('change');
     }
   });
+
+
+  $('#flex-box').on('scroll', function() {
+    // scroll is not animated and triggered programmatically
+    // hopefully it'll only be fired once
+    var $flex = $(this),
+        flexTop = $flex.offset().top,
+        flexScrollTop = this.scrollTop;
+    $('div[id$=description]').not(':empty').each(function() {
+      var viewName;
+      if( $(this).offset().top == flexTop ) {
+         viewName = this.id.split('-')[0];
+         $('.display-mode-box div').removeClass('view-active');
+         $('.display-mode-' + viewName + 'view').addClass('view-active');
+      }
+      //console.log(this.id, $(this).offset().top, flexTop, flexScrollTop);
+    });
+    //console.log('.', this.scrollTop);
+  }).trigger('scroll');
+
+
+
   setTimeout(function() {
     OursoPhone.calcThumbsSize();
   }, 500);
@@ -223,6 +302,18 @@ OursoPhone.ui.drawAlbum = function(album) {
   }
 
   OursoPhone.cache.album.store(album);
+
+  OursoPhone.cache.album.fields.forEach(function(propName) {
+    if(album[propName]==undefined || album[propName]==null || album[propName]=='') {
+      switch(propName) {
+        case 'full_name':
+          album[propName] = album['username'];
+        break;
+        default:
+          album[propName] = '';
+      }
+    }
+  });
 
   if(album.downloadable===true) {
     //console.info('album "'+album.title+'" is downloadable');
@@ -609,17 +700,23 @@ OursoPhone.ui.resolveUser = function(searchStr, loadTrackList) {
 
 OursoPhone.ui.drawUser = function(user, error) {
   var $usertpl = TemplateStore.get('user-item'),
-  $userBlock = $('#user-description'),
-  lastY;
-  var html = '';
+      $userBlock = $('#user-description'),
+      lastY,
+      html = '';
 
   OursoPhone.cache.user.store( user );
 
   OursoPhone.cache.user.fields.forEach(function(propName) {
-    if(user[propName]==undefined || user[propName]==null) {
-      user[propName] = '';
+    if(user[propName]==undefined || user[propName]==null || user[propName]=='') {
+      switch(propName) {
+        case 'full_name':
+          user[propName] = user['username'];
+        break;
+        default:
+          user[propName] = '';
+      }
     }
-  })
+  });
 
   html = $usertpl.replaceArray([
     "{user-id}",
@@ -650,6 +747,17 @@ OursoPhone.ui.drawUser = function(user, error) {
   ]);
 
   $userBlock.removeClass('contracted').html(html);
+  $userBlock.trigger('init');
+
+  $userBlock.find('.user-playlistcount').on('click', function() {
+    if( parseInt( $(this).text() ) <= 0 ) {
+      return false;
+    }
+
+    OursoPhone.config.scUserID = $(this).attr('data-user-id');
+    location.href = '#';
+
+  });
 
   if(OursoPhone.config.gestureLoaded) {
     // this sucks

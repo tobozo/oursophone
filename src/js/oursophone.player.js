@@ -316,10 +316,10 @@ OursoPhone.player.dataWaveformReady = function() {
 
   if(currentPlayer!==undefined && waveformData!==undefined) {
 
-    var       ratio = (currentPlayer.position / currentPlayer.duration),
-    progress = (ratio*OursoPhone.waveformWidth),
-    waveformIndex = (ratio*1800).toFixed(0),
-    waveformRatio = 0
+    var ratio = (currentPlayer.position / currentPlayer.duration),
+        progress = (ratio*OursoPhone.waveformWidth),
+        waveformIndex = (ratio*1800).toFixed(0),
+        waveformRatio = 0
     ;
 
     waveformRatio = waveformData.samples[waveformIndex] / waveformData.height;

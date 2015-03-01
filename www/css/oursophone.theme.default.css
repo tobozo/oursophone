@@ -74,8 +74,8 @@ div.track:last-of-type {/*
 .volume-control {
   margin: 1em;
   padding: 0;
-  position: absolute;
-  top: 50%;
+  display:inline-block;
+  float:left;
   -webkit-transform: rotate(-90deg) scale(0.4);
       -ms-transform: rotate(-90deg) scale(0.4);
           transform: rotate(-90deg) scale(0.4);
@@ -101,15 +101,6 @@ div.track:last-of-type {/*
 }
 
 
-#controls .display-mode-box {
-  margin-left: 2em;
-}
-
-#player-state {
-  left:auto;
-  right:0;
-}
-
 #controls {
   margin-bottom: 10px;
   margin-top: 10px;
@@ -125,10 +116,6 @@ div.track:last-of-type {/*
 }
 [data-action="pause"] span:hover {
   background-color: #ccc;
-}
-
-.search-button {
-  top:0;
 }
 
 

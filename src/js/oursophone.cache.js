@@ -56,7 +56,7 @@ OursoPhone.cache = {
       };
       cacheData.cached_at = Date.now();
       cacheData = JSON.stringify( cacheData );
-      localStorage.setItem('oursophone-cache', cacheData);
+      localforage.setItem('oursophone-cache', cacheData);
       OursoPhone.cache.size = OursoPhone.cache.hsize( cacheData.length );
       $('oursophone').attr('data-size', OursoPhone.cache.size );
     }
@@ -64,13 +64,16 @@ OursoPhone.cache = {
   restore: function() {
     var cacheData;
     if( OursoPhone.localStorage ) {
-      cacheData = localStorage.getItem('oursophone-cache');
-      //console.log('cache data', cacheData);
-      if(cacheData === null) return;
-      OursoPhone.cache.size = OursoPhone.cache.hsize( cacheData.length );
-      $('oursophone').attr('data-size', OursoPhone.cache.size );
-      cacheData = JSON.parse(cacheData);
-      if(cacheData!==null) {
+      cacheData =
+      localforage.getItem('oursophone-cache', function(err, cacheData) {
+        if(err) {
+          return;
+        }
+        if(cacheData === null) return;
+        OursoPhone.cache.size = OursoPhone.cache.hsize( cacheData.length );
+        $('oursophone').attr('data-size', OursoPhone.cache.size );
+        cacheData = JSON.parse(cacheData);
+        if(cacheData === null) return;
         // jquery extends
         console.info('unfreezing cache from localStorage', cacheData);
         OursoPhone.cache.user.byid = cacheData.user.byid;
@@ -82,7 +85,7 @@ OursoPhone.cache = {
         OursoPhone.cache.album.byid = cacheData.album.byid;
         OursoPhone.cache.tagList.bytag = cacheData.tagList.bytag;
         OursoPhone.cache.playList.byuser = cacheData.playList.byuser;
-      }
+      });
     }
   },
   clean: function() {

@@ -34,7 +34,7 @@ OursoPhone.ui.init = function() {
           console.log('view already set');
           return false;
         }
-console.log('wat');
+        //console.log('wat');
         $scrollTarget = $('#' + mode.replace('view', '') + '-description');
 
         if($scrollTarget.is(':empty')) {
@@ -42,12 +42,12 @@ console.log('wat');
           $playlist.removeClass('docked');
           return false;
         }
-console.log('wot');
+        //console.log('wot');
         // do NOT animate the scroll itself
         $flexBox = $('#flex-box');
 
         $flexBox.animate({opacity:0.5}, 100, function() {
-          console.log('wut');
+          //console.log('wut');
           $flexBox.scrollTo( $scrollTarget, 0, function() {
             $flexBox.animate({opacity:1}, 100, function() {
 
@@ -133,7 +133,7 @@ console.log('wot');
     OursoPhone.player.setVolume( thisVal*100 );
     if( OursoPhone.localStorage ) {
       console.info('saving config');
-      localStorage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) );
+      localforage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) );
     }
   });
 
@@ -180,7 +180,7 @@ console.log('wot');
     OursoPhone.config.showComments = this.checked;
     if( OursoPhone.localStorage ) {
       console.info('saving config');
-      localStorage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) );
+      localforage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) );
     }
   });
   $('#un-mute').attr('checked', OursoPhone.config.showComments);

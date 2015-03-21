@@ -48,23 +48,32 @@ OursoPhone.init = function(options) {
     OursoPhone.config = $.extend(OursoPhone.config, options); // Overwrite settings
   }
 
+
   try {
     localStorage.setItem('blah', 'blah');
     localStorage.removeItem('blah');
     OursoPhone.localStorage = true;
   } catch(e) { ; }
 
-  if( OursoPhone.localStorage ) {
 
-    options = JSON.parse(localStorage.getItem('oursophone-config'));
-    if(options!==null) {
-      OursoPhone.config = $.extend( OursoPhone.config, options ); // Overwrite settings
+  localforage.getItem('oursophone-config', function(err, options) {
+    if(err) {
+      OursoPhone.setup();
+    } else {
+      options = JSON.parse( options );
+      if(options!==null) {
+        OursoPhone.config = $.extend( OursoPhone.config, options ); // Overwrite settings
+      }
+      OursoPhone.cache.restore();
+      OursoPhone.setup();
     }
-
-    OursoPhone.cache.restore();
     setInterval(OursoPhone.cache.autoSave, OursoPhone.cache.autoSaveFreq*1000);
+  });
+};
 
-  }
+
+
+OursoPhone.setup = function() {
 
   navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
   // vibration API supported ?

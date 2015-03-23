@@ -178,6 +178,9 @@ OursoPhone.ui.init = function() {
       OursoPhone.ui.vibrate(e);
     }
     OursoPhone.config.showComments = this.checked;
+    if(! this.checked) {
+      $('#comments').empty();
+    }
     if( OursoPhone.localStorage ) {
       console.info('saving config');
       localforage.setItem('oursophone-config', JSON.stringify( OursoPhone.config ) );

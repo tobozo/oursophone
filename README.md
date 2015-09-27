@@ -67,7 +67,12 @@ Warning : the Rack app will relay the waveform requests just as the PHP file wou
 
 * Resolve all the dependancies mess
 
-* Make sure your JAVA_HOME, ANDROID_HOME and AND_HOME are well set in your path
+* Make sure your JAVA_HOME, ANDROID_HOME and ANT_HOME are well set in your path
+
+`      $ export ANDROID_HOME=~/adt-bundle-linux-x86/sdk
+`      $ export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-i386
+`      $ export ANT_HOME=/usr/share/ant
+`      $ export PATH=$PATH:$JAVA_HOME/bin:$ANT_HOME/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools
 
 `      $ grunt phonegap:build
 

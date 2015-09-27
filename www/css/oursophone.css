@@ -1032,8 +1032,6 @@ circle {
 }
 
 .display-mode-box {
-  margin-top: -50px;
-  margin-bottom: -11px;
   z-index: 1000000;
   display: inline-block;
   background: black;
@@ -1203,12 +1201,39 @@ tag:hover {
     position: fixed;
   }
 
-/*
-  .waveform-holder {
-    -webkit-box-flex: 0;
-    -webkit-flex: 0;
-        -ms-flex: 0;
-            flex: 0;
-  }
-*/
 }
+
+
+/* Portrait */
+@media screen and (orientation:portrait) {
+   /* Portrait styles here */
+   .display-mode-box {
+     margin-bottom: 0px;
+     margin-top: 0px;
+   }
+   #player-state {
+     margin: calc( 0.5em - 2px );
+   }
+}
+
+
+/* Landscape */
+@media screen and (orientation:landscape) {
+   /* Landscape styles here */
+   #controls {
+     flex: 0 0 6em;
+   }
+   .display-mode-box {
+     margin-top: -2em;
+   }
+   #user-description, #album-description, #track-description {
+     height: calc( 100vh - ( 6em + 92px ) );
+   }
+
+   #playlist, #playlist[data-display-mode="list"], #playlist.docked, #playlist[data-display-mode="list"].docked {
+     height: calc( 100vh - ( 6em + 92px ) );
+     top: calc( 100vh - ( 6em + 92px ) );
+   }
+}
+
+

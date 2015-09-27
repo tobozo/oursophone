@@ -88,7 +88,7 @@ OursoPhone.setup = function() {
 
   if(OursoPhone.config.isInWebView) {
     OursoPhone.config.thumbs.autoresize = false;
-    OursoPhone.config.theme = 'mobile';
+    // OursoPhone.config.theme = 'mobile';
     OursoPhone.config.gestureLoaded = true;
 
     /* check for Cordova device-feedback plugin existence */
